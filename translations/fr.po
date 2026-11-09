@@ -1,0 +1,365 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: wahosearch_connector 1.0.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language: fr\n"
+
+msgid "WahoSearch Connector"
+msgstr "Connecteur WahoSearch"
+
+msgid "Connection"
+msgstr "Connexion"
+
+msgid "Content types"
+msgstr "Types de contenu"
+
+msgid "Synchronization"
+msgstr "Synchronisation"
+
+msgid "Excluded content"
+msgstr "Contenu exclu"
+
+msgid "Log"
+msgstr "Journal"
+
+msgid "Indexed content types"
+msgstr "Types de contenu indexés"
+
+msgid "Synchronization log"
+msgstr "Journal de synchronisation"
+
+msgid "Connect this site to the WahoSearch platform and choose what gets indexed."
+msgstr "Connectez ce site à la plateforme WahoSearch et choisissez ce qui est indexé."
+
+msgid "Administer WahoSearch Connector"
+msgstr "Administrer le connecteur WahoSearch"
+
+msgid "Configure the SaaS connection, content types and field mapping, and run synchronization."
+msgstr "Configurer la connexion à la plateforme, les types de contenu et les champs, et lancer la synchronisation."
+
+msgid "Exclude individual content from WahoSearch"
+msgstr "Exclure des contenus individuels de WahoSearch"
+
+msgid "Show the Exclude from WahoSearch option on content edit forms."
+msgstr "Afficher l’option Exclure de WahoSearch sur les formulaires de modification de contenu."
+
+msgid "Platform connection"
+msgstr "Connexion à la plateforme"
+
+msgid "Platform URL"
+msgstr "URL de la plateforme"
+
+msgid "The address of the search platform. It must use HTTPS."
+msgstr "L’adresse de la plateforme de recherche. Elle doit utiliser HTTPS."
+
+msgid "Site ID"
+msgstr "Identifiant du site"
+
+msgid "Shown on the website page of the platform dashboard."
+msgstr "Affiché sur la page du site Web dans le tableau de bord de la plateforme."
+
+msgid "Secret key"
+msgstr "Clé secrète"
+
+msgid "The secret key is set in settings.php."
+msgstr "La clé secrète est définie dans settings.php."
+
+msgid "A secret key is saved. Leave this empty to keep it."
+msgstr "Une clé secrète est enregistrée. Laissez ce champ vide pour la conserver."
+
+msgid "Shown once when the website is created on the platform."
+msgstr "Affichée une seule fois lors de la création du site Web sur la plateforme."
+
+msgid "Synchronization behaviour"
+msgstr "Fonctionnement de la synchronisation"
+
+msgid "Update the search index automatically when content changes"
+msgstr "Mettre à jour l’index de recherche automatiquement lorsque le contenu change"
+
+msgid "Send changes right after saving instead of waiting for cron"
+msgstr "Envoyer les modifications dès l’enregistrement sans attendre le cron"
+
+msgid "Items per request"
+msgstr "Éléments par requête"
+
+msgid "Request timeout in seconds"
+msgstr "Délai d’expiration des requêtes, en secondes"
+
+msgid "Days to keep log entries"
+msgstr "Nombre de jours de conservation du journal"
+
+msgid "Save and test connection"
+msgstr "Enregistrer et tester la connexion"
+
+msgid "The platform URL must use HTTPS. Plain HTTP is only allowed on local development hosts."
+msgstr "L’URL de la plateforme doit utiliser HTTPS. HTTP n’est permis que sur les hôtes de développement locaux."
+
+msgid "Connected to the platform as %site."
+msgstr "Connecté à la plateforme en tant que %site."
+
+msgid "The settings were saved, but the connection failed: @reason"
+msgstr "Les paramètres ont été enregistrés, mais la connexion a échoué : @reason"
+
+msgid "Only the content types ticked here are sent to the search platform. Everything else stays private to this site."
+msgstr "Seuls les types de contenu cochés ici sont envoyés à la plateforme de recherche. Tout le reste demeure privé sur ce site."
+
+msgid "Content types on this site"
+msgstr "Types de contenu de ce site"
+
+msgid "Content type"
+msgstr "Type de contenu"
+
+msgid "Index"
+msgstr "Indexer"
+
+msgid "Include restricted content"
+msgstr "Inclure le contenu restreint"
+
+msgid "Published items"
+msgstr "Éléments publiés"
+
+msgid "Indexed documents"
+msgstr "Documents indexés"
+
+msgid "Fields"
+msgstr "Champs"
+
+msgid "This site has no content types yet."
+msgstr "Ce site n’a encore aucun type de contenu."
+
+msgid "Index @type"
+msgstr "Indexer @type"
+
+msgid "Include restricted @type content"
+msgstr "Inclure le contenu restreint de @type"
+
+msgid "Choose fields for @type"
+msgstr "Choisir les champs de @type"
+
+msgid "Restricted content is content that anonymous visitors cannot open. When it is included, the roles allowed to view it are sent with it."
+msgstr "Le contenu restreint est le contenu que les visiteurs anonymes ne peuvent pas ouvrir. S’il est inclus, les rôles autorisés à le consulter sont envoyés avec lui."
+
+msgid "Save content types"
+msgstr "Enregistrer les types de contenu"
+
+msgid "The content types were saved."
+msgstr "Les types de contenu ont été enregistrés."
+
+msgid "@count items were queued to update the search index."
+msgstr "@count éléments ont été mis en file d’attente pour mettre à jour l’index de recherche."
+
+msgid "Fields of @type"
+msgstr "Champs de @type"
+
+msgid "The title, address, language and dates are always sent. Choose the other fields to include."
+msgstr "Le titre, l’adresse, la langue et les dates sont toujours envoyés. Choisissez les autres champs à inclure."
+
+msgid "Available fields"
+msgstr "Champs disponibles"
+
+msgid "Field"
+msgstr "Champ"
+
+msgid "Field type"
+msgstr "Type de champ"
+
+msgid "Include"
+msgstr "Inclure"
+
+msgid "Name in search index"
+msgstr "Nom dans l’index de recherche"
+
+msgid "Used as"
+msgstr "Utilisé comme"
+
+msgid "This content type has no fields that can be indexed."
+msgstr "Ce type de contenu n’a aucun champ pouvant être indexé."
+
+msgid "Taxonomy filter"
+msgstr "Filtre de taxonomie"
+
+msgid "Main searchable text"
+msgstr "Texte principal de recherche"
+
+msgid "Summary"
+msgstr "Résumé"
+
+msgid "Metadata"
+msgstr "Métadonnées"
+
+msgid "Include @field"
+msgstr "Inclure @field"
+
+msgid "Name in search index for @field"
+msgstr "Nom dans l’index de recherche pour @field"
+
+msgid "Use of @field"
+msgstr "Utilisation de @field"
+
+msgid "Save fields"
+msgstr "Enregistrer les champs"
+
+msgid "Index names can only use lowercase letters, numbers and underscores, and must start with a letter."
+msgstr "Les noms d’index ne peuvent contenir que des lettres minuscules, des chiffres et des traits de soulignement, et doivent commencer par une lettre."
+
+msgid "The index name %name is used twice."
+msgstr "Le nom d’index %name est utilisé deux fois."
+
+msgid "The field selection was saved."
+msgstr "La sélection de champs a été enregistrée."
+
+msgid "The connection is not set up yet. Please complete the <a href=\":url\">connection settings</a> first."
+msgstr "La connexion n’est pas encore configurée. Veuillez d’abord remplir les <a href=\":url\">paramètres de connexion</a>."
+
+msgid "Current status"
+msgstr "État actuel"
+
+msgid "Item"
+msgstr "Élément"
+
+msgid "Value"
+msgstr "Valeur"
+
+msgid "Documents with errors"
+msgstr "Documents en erreur"
+
+msgid "Changes waiting to be sent"
+msgstr "Modifications en attente d’envoi"
+
+msgid "Last full synchronization"
+msgstr "Dernière synchronisation complète"
+
+msgid "Never"
+msgstr "Jamais"
+
+msgid "Last error"
+msgstr "Dernière erreur"
+
+msgid "None"
+msgstr "Aucune"
+
+msgid "Send pending changes now"
+msgstr "Envoyer maintenant les modifications en attente"
+
+msgid "Retry failed items"
+msgstr "Réessayer les éléments en échec"
+
+msgid "Run full synchronization"
+msgstr "Lancer la synchronisation complète"
+
+msgid "Update a single item"
+msgstr "Mettre à jour un seul élément"
+
+msgid "Node ID"
+msgstr "Identifiant du nœud"
+
+msgid "Send this item"
+msgstr "Envoyer cet élément"
+
+msgid "No content was found with that ID."
+msgstr "Aucun contenu ne correspond à cet identifiant."
+
+msgid "Title"
+msgstr "Titre"
+
+msgid "Excluded on"
+msgstr "Exclu le"
+
+msgid "No individual content is excluded. To exclude an item, use the WahoSearch option on its edit form."
+msgstr "Aucun contenu individuel n’est exclu. Pour exclure un élément, utilisez l’option WahoSearch de son formulaire de modification."
+
+msgid "Include selected items again"
+msgstr "Inclure de nouveau les éléments sélectionnés"
+
+msgid "Please select at least one item."
+msgstr "Veuillez sélectionner au moins un élément."
+
+msgid "All"
+msgstr "Tout"
+
+msgid "Errors"
+msgstr "Erreurs"
+
+msgid "Warnings"
+msgstr "Avertissements"
+
+msgid "Show"
+msgstr "Afficher"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Level"
+msgstr "Niveau"
+
+msgid "Operation"
+msgstr "Opération"
+
+msgid "Message"
+msgstr "Message"
+
+msgid "No log entries yet."
+msgstr "Aucune entrée dans le journal pour le moment."
+
+msgid "WahoSearch"
+msgstr "WahoSearch"
+
+msgid "Exclude from WahoSearch"
+msgstr "Exclure de WahoSearch"
+
+msgid "This item will not appear in website search or chatbot answers."
+msgstr "Cet élément n’apparaîtra ni dans la recherche du site ni dans les réponses du robot conversationnel."
+
+msgid "Full synchronization"
+msgstr "Synchronisation complète"
+
+msgid "Completed @current of @total steps."
+msgstr "@current étapes terminées sur @total."
+
+msgid "The full synchronization stopped because of an error."
+msgstr "La synchronisation complète s’est arrêtée à cause d’une erreur."
+
+msgid "Sending pending changes"
+msgstr "Envoi des modifications en attente"
+
+msgid "Content type @bundle: @done of @total"
+msgstr "Type de contenu @bundle : @done sur @total"
+
+msgid "The full synchronization stopped: @reason. Nothing was removed from the index. Please try again."
+msgstr "La synchronisation complète s’est arrêtée : @reason. Rien n’a été retiré de l’index. Veuillez réessayer."
+
+msgid "@count documents could not be sent, so old content was not cleaned up. Please check the log and run the full synchronization again."
+msgstr "@count documents n’ont pas pu être envoyés; l’ancien contenu n’a donc pas été nettoyé. Veuillez consulter le journal et relancer la synchronisation complète."
+
+msgid "Full synchronization finished. @count items processed."
+msgstr "Synchronisation complète terminée. @count éléments traités."
+
+msgid "All content was sent, but the run could not be closed: @reason"
+msgstr "Tout le contenu a été envoyé, mais l’opération n’a pas pu être fermée : @reason"
+
+msgid "@count changes left."
+msgstr "Il reste @count modifications."
+
+msgid "@count changes processed."
+msgstr "@count modifications traitées."
+
+msgid "@count changes are still waiting. Please check the log."
+msgstr "@count modifications sont encore en attente. Veuillez consulter le journal."
+
+msgid "Configured"
+msgstr "Configuré"
+
+msgid "Not configured"
+msgstr "Non configuré"
+
+msgid "Enter the platform details on the <a href=\":url\">connection page</a>."
+msgstr "Entrez les renseignements de la plateforme sur la <a href=\":url\">page de connexion</a>."
+
+msgid "@label <small>(@name)</small>"
+msgstr "@label <small>(@name)</small>"
+
+msgid "Connects this site to the hosted WahoSearch platform. Choose the content types and fields to index, then run a full synchronization. After that, changes are sent automatically."
+msgstr "Connecte ce site à la plateforme WahoSearch hébergée. Choisissez les types de contenu et les champs à indexer, puis lancez une synchronisation complète. Ensuite, les modifications sont envoyées automatiquement."

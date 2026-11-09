@@ -1,0 +1,8 @@
+endpoint: ''
+site_id: ''
+timeout: 15
+batch_size: 25
+sync_on_save: true
+immediate: true
+log_retention_days: 30
+bundles: {}

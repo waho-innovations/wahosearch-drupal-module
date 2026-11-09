@@ -1,0 +1,7 @@
+administer wahosearch connector:
+  title: 'Administer WahoSearch Connector'
+  description: 'Configure the SaaS connection, content types and field mapping, and run synchronization.'
+  restrict access: true
+exclude content from wahosearch:
+  title: 'Exclude individual content from WahoSearch'
+  description: 'Show the Exclude from WahoSearch option on content edit forms.'

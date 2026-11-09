@@ -1,0 +1,6 @@
+wahosearch_connector.settings:
+  title: 'WahoSearch Connector'
+  description: 'Connect this site to the WahoSearch platform and choose what gets indexed.'
+  parent: system.admin_config_search
+  route_name: wahosearch_connector.settings
+  weight: 10

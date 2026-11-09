@@ -1,0 +1,10 @@
+{
+    "name": "drupal/wahosearch_connector",
+    "description": "Connects a Drupal site to the hosted WahoSearch platform and keeps selected content in sync.",
+    "type": "drupal-module",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=8.1",
+        "drupal/core": "^10.2 || ^11"
+    }
+}

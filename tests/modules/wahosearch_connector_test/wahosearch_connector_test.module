@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * @file
+ * Access rules used by the WahoSearch Connector tests.
+ */
+
+declare(strict_types=1);
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\node\NodeInterface;
+
+/**
+ * Implements hook_node_access().
+ */
+function wahosearch_connector_test_node_access(NodeInterface $node, string $operation, AccountInterface $account): AccessResult {
+  if ($operation === 'view' && $node->getTitle() === 'Members only' && !in_array('member', $account->getRoles(), TRUE)) {
+    return AccessResult::forbidden();
+  }
+  return AccessResult::neutral();
+}

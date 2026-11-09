@@ -1,0 +1,51 @@
+wahosearch_connector.settings:
+  type: config_object
+  label: 'WahoSearch Connector settings'
+  mapping:
+    endpoint:
+      type: string
+      label: 'SaaS API base URL'
+    site_id:
+      type: string
+      label: 'Site ID'
+    timeout:
+      type: integer
+      label: 'Request timeout in seconds'
+    batch_size:
+      type: integer
+      label: 'Items per request'
+    sync_on_save:
+      type: boolean
+      label: 'Queue changes automatically when content is saved'
+    immediate:
+      type: boolean
+      label: 'Send queued changes at the end of the request instead of waiting for cron'
+    log_retention_days:
+      type: integer
+      label: 'Days to keep log entries'
+    bundles:
+      type: sequence
+      label: 'Indexed content types'
+      sequence:
+        type: mapping
+        label: 'Content type'
+        mapping:
+          enabled:
+            type: boolean
+            label: 'Indexed'
+          include_private:
+            type: boolean
+            label: 'Include content not visible to anonymous visitors'
+          fields:
+            type: sequence
+            label: 'Mapped fields'
+            sequence:
+              type: mapping
+              label: 'Field mapping'
+              mapping:
+                target:
+                  type: string
+                  label: 'Target name in the SaaS index'
+                role:
+                  type: string
+                  label: 'Field role'

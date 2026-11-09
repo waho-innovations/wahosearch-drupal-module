@@ -1,0 +1,12 @@
+name: 'WahoSearch Connector'
+type: module
+description: 'Connects this site to the hosted WahoSearch platform and keeps selected content in sync.'
+package: Search
+version: '1.0.0'
+core_version_requirement: ^10.2 || ^11
+configure: wahosearch_connector.settings
+dependencies:
+  - drupal:node
+  - drupal:taxonomy
+  - drupal:user
+'interface translation project': wahosearch_connector

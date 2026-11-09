@@ -1,0 +1,6 @@
+name: 'WahoSearch Connector test support'
+type: module
+description: 'Access rules used by the WahoSearch Connector tests.'
+package: Testing
+hidden: true
+core_version_requirement: ^10.2 || ^11

@@ -1,0 +1,48 @@
+wahosearch_connector.settings:
+  path: '/admin/config/search/wahosearch-connector'
+  defaults:
+    _form: '\Drupal\wahosearch_connector\Form\ConnectionSettingsForm'
+    _title: 'WahoSearch Connector'
+  requirements:
+    _permission: 'administer wahosearch connector'
+
+wahosearch_connector.content_types:
+  path: '/admin/config/search/wahosearch-connector/content-types'
+  defaults:
+    _form: '\Drupal\wahosearch_connector\Form\ContentTypesForm'
+    _title: 'Indexed content types'
+  requirements:
+    _permission: 'administer wahosearch connector'
+
+wahosearch_connector.field_mapping:
+  path: '/admin/config/search/wahosearch-connector/content-types/{bundle}/fields'
+  defaults:
+    _form: '\Drupal\wahosearch_connector\Form\FieldMappingForm'
+    _title_callback: '\Drupal\wahosearch_connector\Form\FieldMappingForm::title'
+  requirements:
+    _permission: 'administer wahosearch connector'
+    bundle: '[a-z0-9_]+'
+
+wahosearch_connector.sync:
+  path: '/admin/config/search/wahosearch-connector/sync'
+  defaults:
+    _form: '\Drupal\wahosearch_connector\Form\SyncForm'
+    _title: 'Synchronization'
+  requirements:
+    _permission: 'administer wahosearch connector'
+
+wahosearch_connector.excluded:
+  path: '/admin/config/search/wahosearch-connector/excluded'
+  defaults:
+    _form: '\Drupal\wahosearch_connector\Form\ExcludedItemsForm'
+    _title: 'Excluded content'
+  requirements:
+    _permission: 'administer wahosearch connector'
+
+wahosearch_connector.logs:
+  path: '/admin/config/search/wahosearch-connector/logs'
+  defaults:
+    _controller: '\Drupal\wahosearch_connector\Controller\SyncLogController::list'
+    _title: 'Synchronization log'
+  requirements:
+    _permission: 'administer wahosearch connector'
