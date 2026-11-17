@@ -84,6 +84,9 @@ From the Drupal web root, with `SIMPLETEST_DB` and `SIMPLETEST_BASE_URL` set:
 
     ../vendor/bin/phpunit -c core modules/custom/wahosearch_connector/tests
 
+The Paragraphs tests run only when the Paragraphs module is in the codebase
+(`composer require drupal/paragraphs`), otherwise they are skipped.
+
 ## API
 
 The platform API is described in [docs/API_CONTRACT.md](docs/API_CONTRACT.md).
