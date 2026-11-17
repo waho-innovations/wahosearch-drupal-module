@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\wahosearch_connector\Service;
 
+use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityPublishedInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
@@ -31,6 +33,11 @@ class ContentNormalizer {
    * The entity access cache is keyed by user ID, so each role needs its own.
    */
   protected const ROLE_ACCOUNT_BASE_UID = 2147480000;
+
+  /**
+   * How deep nested Paragraphs are followed.
+   */
+  protected const MAX_PARAGRAPH_DEPTH = 6;
 
   /**
    * Per-role accounts, built once per request.
@@ -153,7 +160,7 @@ class ContentNormalizer {
         }
         continue;
       }
-      $values = $this->exportValues($items, $definition, $accounts);
+      $values = $this->exportValues($items, $definition, $accounts, $langcode);
       if ($values) {
         $fields[$map['target']] = [
           'type' => $definition->getType(),
@@ -293,10 +300,10 @@ class ContentNormalizer {
   /**
    * Exports the values of a non-taxonomy field.
    */
-  protected function exportValues(FieldItemListInterface $items, FieldDefinitionInterface $definition, array $accounts): array {
+  protected function exportValues(FieldItemListInterface $items, FieldDefinitionInterface $definition, array $accounts, ?string $langcode = NULL): array {
     $values = [];
     foreach ($items as $item) {
-      $value = $this->exportItem($item, $definition, $accounts);
+      $value = $this->exportItem($item, $definition, $accounts, $langcode);
       if ($value !== NULL) {
         $values[] = $value;
       }
@@ -307,7 +314,7 @@ class ContentNormalizer {
   /**
    * Exports one field value, or NULL when there is nothing to send.
    */
-  protected function exportItem(FieldItemInterface $item, FieldDefinitionInterface $definition, array $accounts): mixed {
+  protected function exportItem(FieldItemInterface $item, FieldDefinitionInterface $definition, array $accounts, ?string $langcode = NULL): mixed {
     switch ($definition->getType()) {
       case 'text':
       case 'text_long':
@@ -369,6 +376,17 @@ class ContentNormalizer {
         }
         return $value;
 
+      case 'entity_reference_revisions':
+        $paragraph = $item->entity;
+        if (!$paragraph instanceof ContentEntityInterface) {
+          return NULL;
+        }
+        // An untranslatable Paragraphs field is shared by all translations and
+        // reports the default one, so the language comes from the caller.
+        $langcode ??= $item->getEntity()->language()->getId();
+        $html = $this->paragraphHtml($paragraph, $langcode, $accounts, 0);
+        return $html === '' ? NULL : ['html' => $html, 'text' => self::htmlToText($html)];
+
       case 'entity_reference':
         $target = $item->entity;
         if (!$target) {
@@ -388,6 +406,70 @@ class ContentNormalizer {
       default:
         return $item->value === NULL ? NULL : (string) $item->value;
     }
+  }
+
+  /**
+   * Collects the text of a paragraph and the paragraphs nested in it.
+   *
+   * Text, plain text and link titles are kept, in field order. Images, files
+   * and other references are left out. A paragraph that is unpublished, or
+   * that one of the allowed roles may not view, adds nothing.
+   */
+  protected function paragraphHtml(ContentEntityInterface $paragraph, string $langcode, array $accounts, int $depth): string {
+    if ($depth > self::MAX_PARAGRAPH_DEPTH) {
+      return '';
+    }
+    if ($paragraph->hasTranslation($langcode)) {
+      $paragraph = $paragraph->getTranslation($langcode);
+    }
+    if ($paragraph instanceof EntityPublishedInterface && !$paragraph->isPublished()) {
+      return '';
+    }
+    foreach ($accounts as $account) {
+      if (!$paragraph->access('view', $account)) {
+        return '';
+      }
+    }
+
+    $parts = [];
+    foreach ($paragraph->getFieldDefinitions() as $name => $definition) {
+      if ($definition->getFieldStorageDefinition()->isBaseField()) {
+        continue;
+      }
+      $items = $paragraph->get($name);
+      if ($items->isEmpty() || !$this->allCanView($items, $accounts)) {
+        continue;
+      }
+      foreach ($items as $item) {
+        switch ($definition->getType()) {
+          case 'text':
+          case 'text_long':
+          case 'text_with_summary':
+            $parts[] = (string) $item->processed;
+            break;
+
+          case 'string':
+          case 'string_long':
+            if ((string) $item->value !== '') {
+              $parts[] = '<p>' . htmlspecialchars((string) $item->value, ENT_QUOTES, 'UTF-8') . '</p>';
+            }
+            break;
+
+          case 'link':
+            if ((string) $item->title !== '') {
+              $parts[] = '<p>' . htmlspecialchars((string) $item->title, ENT_QUOTES, 'UTF-8') . '</p>';
+            }
+            break;
+
+          case 'entity_reference_revisions':
+            if ($item->entity instanceof ContentEntityInterface && $item->entity->getEntityTypeId() === 'paragraph') {
+              $parts[] = $this->paragraphHtml($item->entity, $langcode, $accounts, $depth + 1);
+            }
+            break;
+        }
+      }
+    }
+    return implode("\n", array_filter($parts, fn (string $part) => trim($part) !== ''));
   }
 
   /**

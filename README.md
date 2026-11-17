@@ -25,6 +25,8 @@ Go to Configuration > Search and metadata > WahoSearch Connector.
    test connection.
 2. Content types: tick what should be indexed. Anything not ticked is not sent.
 3. Choose the fields for each content type and their names in the index.
+   Paragraphs fields are offered too: the text of their paragraphs, also
+   nested ones, is sent as page content in the language of each translation.
 4. Synchronization: click Run full synchronization once.
 
 Changes are sent automatically after that.

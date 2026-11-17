@@ -43,6 +43,7 @@ class ContentSelection {
     'list_string', 'list_integer', 'list_float', 'integer', 'decimal',
     'float', 'boolean', 'email', 'telephone', 'datetime', 'daterange',
     'timestamp', 'link', 'entity_reference', 'image', 'file',
+    'entity_reference_revisions',
   ];
 
   public const EXCLUDED_TABLE = 'wahosearch_connector_excluded';
@@ -121,10 +122,22 @@ class ContentSelection {
       if (!in_array($definition->getType(), self::SUPPORTED_FIELD_TYPES, TRUE)) {
         continue;
       }
+      // Only Paragraphs are read through revision references.
+      if ($definition->getType() === 'entity_reference_revisions' && !self::isParagraphField($definition)) {
+        continue;
+      }
       $candidates[$name] = $definition;
     }
     uasort($candidates, fn (FieldDefinitionInterface $a, FieldDefinitionInterface $b) => strnatcasecmp((string) $a->getLabel(), (string) $b->getLabel()));
     return $candidates;
+  }
+
+  /**
+   * Whether a field holds Paragraphs, whose text is part of the page.
+   */
+  public static function isParagraphField(FieldDefinitionInterface $definition): bool {
+    return $definition->getType() === 'entity_reference_revisions'
+      && $definition->getFieldStorageDefinition()->getSetting('target_type') === 'paragraph';
   }
 
   /**
@@ -144,7 +157,7 @@ class ContentSelection {
       if ($this->isTaxonomyField($definition)) {
         $mapping[$name] = ['target' => self::defaultTarget($name), 'role' => 'taxonomy'];
       }
-      elseif ($name === 'body' || in_array($definition->getType(), ['text_with_summary', 'text_long'], TRUE)) {
+      elseif ($name === 'body' || in_array($definition->getType(), ['text_with_summary', 'text_long'], TRUE) || self::isParagraphField($definition)) {
         $mapping[$name] = ['target' => self::defaultTarget($name), 'role' => 'content'];
       }
     }
