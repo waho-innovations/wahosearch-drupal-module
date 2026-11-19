@@ -11,7 +11,9 @@ use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Path\PathMatcherInterface;
 use Drupal\node\NodeInterface;
+use Drupal\path_alias\AliasManagerInterface;
 
 /**
  * Decides which content types, fields and items are sent to the platform.
@@ -55,6 +57,8 @@ class ContentSelection {
     protected EntityFieldManagerInterface $entityFieldManager,
     protected Connection $database,
     protected TimeInterface $time,
+    protected PathMatcherInterface $pathMatcher,
+    protected AliasManagerInterface $aliasManager,
   ) {}
 
   /**
@@ -98,6 +102,123 @@ class ContentSelection {
    */
   public function includesPrivate(string $bundle): bool {
     return !empty($this->getBundleSettings()[$bundle]['include_private']);
+  }
+
+  /**
+   * Whether PDF files attached to a content type are sent.
+   */
+  public function includesPdfs(string $bundle): bool {
+    return !empty($this->getBundleSettings()[$bundle]['include_pdfs']);
+  }
+
+  /**
+   * Returns the internal path and the alias of a translation.
+   */
+  public function getNodePaths(NodeInterface $node): array {
+    $internal = '/node/' . $node->id();
+    return [$internal, $this->aliasManager->getAliasByPath($internal, $node->language()->getId())];
+  }
+
+  /**
+   * Whether the URL path rules allow a translation.
+   */
+  public function isPathAllowed(NodeInterface $node): bool {
+    $config = $this->configFactory->get('wahosearch_connector.settings');
+    return $this->pathPassesRules($this->getNodePaths($node), (string) $config->get('include_paths'), (string) $config->get('exclude_paths'));
+  }
+
+  /**
+   * Applies include and exclude patterns. Exclusions win.
+   */
+  public function pathPassesRules(array $paths, string $include, string $exclude): bool {
+    if (trim($exclude) !== '' && $this->anyPathMatches($paths, $exclude)) {
+      return FALSE;
+    }
+    return trim($include) === '' || $this->anyPathMatches($paths, $include);
+  }
+
+  /**
+   * Returns the priority section of a translation, or NULL.
+   *
+   * @return array{pattern: string, rank: int}|null
+   *   The first matching section. Rank 1 is the most important.
+   */
+  public function getPrioritySection(NodeInterface $node): ?array {
+    $sections = (string) $this->configFactory->get('wahosearch_connector.settings')->get('priority_sections');
+    if (trim($sections) === '') {
+      return NULL;
+    }
+    $paths = $this->getNodePaths($node);
+    foreach (array_values(array_filter(explode("\n", $sections))) as $index => $pattern) {
+      if ($this->anyPathMatches($paths, $pattern)) {
+        return ['pattern' => $pattern, 'rank' => $index + 1];
+      }
+    }
+    return NULL;
+  }
+
+  /**
+   * Counts the published translations new path rules would add or remove.
+   *
+   * @return array{add: int, remove: int, add_samples: string[], remove_samples: string[]}
+   *   Totals with up to five titles each.
+   */
+  public function previewPathRules(string $include, string $exclude): array {
+    $result = ['add' => 0, 'remove' => 0, 'add_samples' => [], 'remove_samples' => []];
+    $enabled = $this->getEnabledBundles();
+    if (!$enabled) {
+      return $result;
+    }
+    $config = $this->configFactory->get('wahosearch_connector.settings');
+    $currentInclude = (string) $config->get('include_paths');
+    $currentExclude = (string) $config->get('exclude_paths');
+    $rows = $this->database->select('node_field_data', 'n')
+      ->fields('n', ['nid', 'langcode', 'title'])
+      ->condition('status', 1)
+      ->condition('type', $enabled, 'IN')
+      ->orderBy('nid')
+      ->execute();
+    foreach ($rows as $row) {
+      $internal = '/node/' . $row->nid;
+      $paths = [$internal, $this->aliasManager->getAliasByPath($internal, $row->langcode)];
+      $before = $this->pathPassesRules($paths, $currentInclude, $currentExclude);
+      $after = $this->pathPassesRules($paths, $include, $exclude);
+      if ($before === $after) {
+        continue;
+      }
+      $key = $after ? 'add' : 'remove';
+      $result[$key]++;
+      if (count($result[$key . '_samples']) < 5) {
+        $result[$key . '_samples'][] = $row->title;
+      }
+    }
+    return $result;
+  }
+
+  /**
+   * Trims a list of patterns and removes empty lines.
+   */
+  public static function cleanPatterns(string $text): string {
+    return implode("\n", array_filter(array_map('trim', preg_split('/\R/', $text) ?: []), 'strlen'));
+  }
+
+  /**
+   * Returns the lines that are not usable patterns.
+   *
+   * @param string $text
+   *   One pattern per line.
+   * @param bool $sectionsOnly
+   *   Only accept patterns covering a whole section, such as /admissions/*.
+   */
+  public static function invalidPatterns(string $text, bool $sectionsOnly = FALSE): array {
+    $invalid = [];
+    foreach (array_filter(explode("\n", self::cleanPatterns($text))) as $line) {
+      $valid = $sectionsOnly ? preg_match('@^/.*/\*$@', $line) : ($line === '<front>' || str_starts_with($line, '/'));
+      if (!$valid) {
+        $invalid[] = $line;
+      }
+    }
+    return $invalid;
   }
 
   /**
@@ -227,6 +348,18 @@ class ContentSelection {
       }
     }
     return $result;
+  }
+
+  /**
+   * Whether any of the paths matches the patterns.
+   */
+  protected function anyPathMatches(array $paths, string $patterns): bool {
+    foreach ($paths as $path) {
+      if ($this->pathMatcher->matchPath($path, $patterns)) {
+        return TRUE;
+      }
+    }
+    return FALSE;
   }
 
   /**

@@ -8,18 +8,28 @@ wahosearch_connector.content_types:
   route_name: wahosearch_connector.content_types
   base_route: wahosearch_connector.settings
   weight: 1
+wahosearch_connector.indexing_rules:
+  title: 'Indexing rules'
+  route_name: wahosearch_connector.indexing_rules
+  base_route: wahosearch_connector.settings
+  weight: 2
+wahosearch_connector.search_display:
+  title: 'Search display'
+  route_name: wahosearch_connector.search_display
+  base_route: wahosearch_connector.settings
+  weight: 3
 wahosearch_connector.sync:
   title: 'Synchronization'
   route_name: wahosearch_connector.sync
   base_route: wahosearch_connector.settings
-  weight: 2
+  weight: 4
 wahosearch_connector.excluded:
   title: 'Excluded content'
   route_name: wahosearch_connector.excluded
   base_route: wahosearch_connector.settings
-  weight: 3
+  weight: 5
 wahosearch_connector.logs:
   title: 'Log'
   route_name: wahosearch_connector.logs
   base_route: wahosearch_connector.settings
-  weight: 4
+  weight: 6

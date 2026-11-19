@@ -23,6 +23,30 @@ wahosearch_connector.field_mapping:
     _permission: 'administer wahosearch connector'
     bundle: '[a-z0-9_]+'
 
+wahosearch_connector.indexing_rules:
+  path: '/admin/config/search/wahosearch-connector/indexing-rules'
+  defaults:
+    _form: '\Drupal\wahosearch_connector\Form\IndexingRulesForm'
+    _title: 'Indexing rules'
+  requirements:
+    _permission: 'administer wahosearch connector'
+
+wahosearch_connector.search_display:
+  path: '/admin/config/search/wahosearch-connector/search-display'
+  defaults:
+    _form: '\Drupal\wahosearch_connector\Form\SearchDisplayForm'
+    _title: 'Search display'
+  requirements:
+    _permission: 'administer wahosearch connector'
+
+wahosearch_connector.search_page:
+  path: '/site-search'
+  defaults:
+    _controller: '\Drupal\wahosearch_connector\Controller\SearchPageController::page'
+    _title: 'Search'
+  requirements:
+    _permission: 'access content'
+
 wahosearch_connector.sync:
   path: '/admin/config/search/wahosearch-connector/sync'
   defaults:

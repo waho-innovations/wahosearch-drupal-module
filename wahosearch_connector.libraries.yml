@@ -1,0 +1,14 @@
+search_page:
+  css:
+    component:
+      css/search-page.css: {}
+
+search_frame:
+  js:
+    js/search-frame.js: {}
+  css:
+    component:
+      css/search-page.css: {}
+  dependencies:
+    - core/drupal
+    - core/once

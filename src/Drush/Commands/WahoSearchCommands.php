@@ -47,6 +47,7 @@ final class WahoSearchCommands extends DrushCommands {
     $this->io()->writeln('Configured: ' . ($this->apiClient->isConfigured() ? 'yes' : 'no'));
     $this->io()->writeln('Indexed documents: ' . $counts[ItemTracker::STATUS_INDEXED]);
     $this->io()->writeln('Documents with errors: ' . $counts[ItemTracker::STATUS_ERROR]);
+    $this->io()->writeln('Documents held back: ' . $counts[ItemTracker::STATUS_DEFERRED]);
     $this->io()->writeln('Changes waiting: ' . $this->syncManager->getQueueSize());
     $this->io()->writeln('Last full synchronization: ' . ($last ? gmdate('c', $last) : 'never'));
   }
@@ -57,7 +58,7 @@ final class WahoSearchCommands extends DrushCommands {
   #[CLI\Command(name: 'wahosearch:test', aliases: ['wst'])]
   public function test(): void {
     try {
-      $response = $this->apiClient->ping();
+      $response = $this->syncManager->testConnection();
       $this->io()->success('Connected as ' . ($response['site_name'] ?? 'this site'));
     }
     catch (ApiException $e) {

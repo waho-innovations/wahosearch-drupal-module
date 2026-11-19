@@ -27,7 +27,7 @@ class ApiClient {
   /**
    * Version sent in the X-Connector-Version header.
    */
-  public const VERSION = '1.0.0';
+  public const VERSION = '1.1.0';
 
   /**
    * State key holding the shared secret when not set in settings.php.
@@ -38,6 +38,16 @@ class ApiClient {
    * Settings.php key that overrides the stored secret.
    */
   public const SECRET_SETTINGS_KEY = 'wahosearch_connector_secret';
+
+  /**
+   * Seconds allowed for sending one file.
+   */
+  protected const UPLOAD_TIMEOUT = 120;
+
+  /**
+   * Seconds a visitor waits at most for search results.
+   */
+  protected const SEARCH_TIMEOUT = 10;
 
   public function __construct(
     protected ClientInterface $httpClient,
@@ -103,6 +113,19 @@ class ApiClient {
   }
 
   /**
+   * Sends the contents of a PDF the platform asked for.
+   */
+  public function uploadFile(string $id, array $file, string $content): array {
+    return $this->request('POST', 'content/file', [
+      'id' => $id,
+      'filename' => $file['filename'],
+      'mime' => $file['mime'],
+      'sha256' => $file['sha256'],
+      'content_base64' => base64_encode($content),
+    ], self::UPLOAD_TIMEOUT);
+  }
+
+  /**
    * Removes documents from the index.
    *
    * @param string[] $ids
@@ -152,6 +175,19 @@ class ApiClient {
   }
 
   /**
+   * Searches the website's indexed content.
+   *
+   * @param array $request
+   *   The search request: query, langcode, roles, page, as described in
+   *   docs/API_CONTRACT.md.
+   *
+   * @throws \Drupal\wahosearch_connector\Exception\ApiException
+   */
+  public function search(array $request): array {
+    return $this->request('POST', 'search', $request, self::SEARCH_TIMEOUT);
+  }
+
+  /**
    * Builds the request signature.
    */
   public static function sign(string $secret, string $timestamp, string $method, string $path, string $body): string {
@@ -178,7 +214,7 @@ class ApiClient {
    *
    * @throws \Drupal\wahosearch_connector\Exception\ApiException
    */
-  protected function request(string $method, string $path, ?array $body = NULL): array {
+  protected function request(string $method, string $path, ?array $body = NULL, ?int $timeout = NULL): array {
     $config = $this->configFactory->get('wahosearch_connector.settings');
     $endpoint = rtrim((string) $config->get('endpoint'), '/');
     $siteId = (string) $config->get('site_id');
@@ -205,7 +241,7 @@ class ApiClient {
         'X-Signature' => self::sign($secret, $timestamp, $method, $parsedPath, $json),
         'X-Connector-Version' => 'drupal/' . self::VERSION,
       ],
-      RequestOptions::TIMEOUT => max(1, (int) ($config->get('timeout') ?: 15)),
+      RequestOptions::TIMEOUT => $timeout ?? max(1, (int) ($config->get('timeout') ?: 15)),
       RequestOptions::CONNECT_TIMEOUT => 10,
       RequestOptions::HTTP_ERRORS => TRUE,
       RequestOptions::ALLOW_REDIRECTS => FALSE,
@@ -223,14 +259,23 @@ class ApiClient {
     catch (RequestException $e) {
       $status = $e->getResponse()?->getStatusCode() ?? 0;
       $detail = '';
+      $code = $message = $retryAfter = NULL;
       if ($e->getResponse()) {
         $decoded = json_decode((string) $e->getResponse()->getBody(), TRUE);
         if (is_array($decoded) && isset($decoded['message']) && is_string($decoded['message'])) {
-          $detail = ': ' . mb_substr($decoded['message'], 0, 300);
+          $message = mb_substr($decoded['message'], 0, 300);
+          $detail = ': ' . $message;
+        }
+        if (is_array($decoded) && isset($decoded['code']) && is_string($decoded['code'])) {
+          $code = mb_substr($decoded['code'], 0, 64);
+        }
+        $header = $e->getResponse()->getHeaderLine('Retry-After');
+        if (ctype_digit($header)) {
+          $retryAfter = (int) $header;
         }
       }
       $retryable = $status === 0 || $status === 408 || $status === 429 || $status >= 500;
-      throw new ApiException(sprintf('The platform returned HTTP %d%s', $status, $detail), $status, $retryable, $e);
+      throw new ApiException(sprintf('The platform returned HTTP %d%s', $status, $detail), $status, $retryable, $e, $code, $message, $retryAfter);
     }
     catch (GuzzleException $e) {
       throw new ApiException('Request failed: ' . $e->getMessage(), 0, TRUE, $e);

@@ -1,0 +1,52 @@
+{#
+/**
+ * @file
+ * The WahoSearch search page.
+ *
+ * To change it, copy this file into your theme's templates folder and edit the
+ * copy. Clear the cache afterwards.
+ *
+ * Available variables:
+ * - form: the search box.
+ * - query: the question, already trimmed. Empty when nothing was searched.
+ * - langcode: the language of the page, which is also the language of every
+ *   result.
+ * - results: the results, each rendered with wahosearch-search-result.html.twig.
+ * - error: a message for the visitor when the search failed, or empty.
+ * - page: the page number, starting at 1.
+ * - previous_url, next_url: links to the other pages, or empty.
+ */
+#}
+<div class="wahosearch-search" lang="{{ langcode }}">
+  {{ form }}
+
+  <div class="wahosearch-search__status" role="status" aria-live="polite">
+    {% if error %}
+      <p class="wahosearch-search__message wahosearch-search__message--error">{{ error }}</p>
+    {% elseif query and results is empty %}
+      <p class="wahosearch-search__message"><strong>{{ 'No results for “@query”.'|t({'@query': query}) }}</strong></p>
+      <p class="wahosearch-search__hint">{{ 'Try fewer words, other words, or check the spelling.'|t }}</p>
+    {% elseif query %}
+      <h2 class="wahosearch-search__heading">{{ 'Results for “@query”'|t({'@query': query}) }}{% if page > 1 %} <span class="wahosearch-search__page">{{ '(page @page)'|t({'@page': page}) }}</span>{% endif %}</h2>
+    {% endif %}
+  </div>
+
+  {% if results is not empty %}
+    <ol class="wahosearch-search__results">
+      {% for result in results %}
+        <li class="wahosearch-search__item">{{ result }}</li>
+      {% endfor %}
+    </ol>
+  {% endif %}
+
+  {% if previous_url or next_url %}
+    <nav class="wahosearch-search__pager" aria-label="{{ 'More results'|t }}">
+      {% if previous_url %}
+        <a href="{{ previous_url }}" rel="prev">{{ 'Previous'|t }}</a>
+      {% endif %}
+      {% if next_url %}
+        <a href="{{ next_url }}" rel="next">{{ 'More results'|t }}</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+</div>

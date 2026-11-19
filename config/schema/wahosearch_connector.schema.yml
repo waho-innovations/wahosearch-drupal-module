@@ -23,6 +23,30 @@ wahosearch_connector.settings:
     log_retention_days:
       type: integer
       label: 'Days to keep log entries'
+    reconcile_days:
+      type: integer
+      label: 'Days between automatic reconciliation runs, 0 to turn off'
+    pdf_max_mb:
+      type: integer
+      label: 'Largest PDF to send, in megabytes'
+    include_paths:
+      type: string
+      label: 'Only index these URL paths'
+    exclude_paths:
+      type: string
+      label: 'Never index these URL paths'
+    priority_sections:
+      type: string
+      label: 'Priority sections, most important first'
+    search_page:
+      type: boolean
+      label: 'Provide the search page'
+    search_mode:
+      type: string
+      label: 'How results are shown: drupal or hosted'
+    chatbot:
+      type: boolean
+      label: 'Show the chatbot on public pages'
     bundles:
       type: sequence
       label: 'Indexed content types'
@@ -36,6 +60,9 @@ wahosearch_connector.settings:
           include_private:
             type: boolean
             label: 'Include content not visible to anonymous visitors'
+          include_pdfs:
+            type: boolean
+            label: 'Index PDF files attached to this content'
           fields:
             type: sequence
             label: 'Mapped fields'
@@ -49,3 +76,6 @@ wahosearch_connector.settings:
                 role:
                   type: string
                   label: 'Field role'
+                pdf_fallback:
+                  type: boolean
+                  label: 'Send only when no PDF of the item is indexed'

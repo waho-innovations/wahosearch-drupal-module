@@ -22,6 +22,11 @@ class RecordingApiClient extends ApiClient {
   public static ?\Throwable $failWith = NULL;
 
   /**
+   * When set, only calls to this path fail.
+   */
+  public static ?string $failPath = NULL;
+
+  /**
    * Response returned for content/bulk.
    */
   public static array $bulkResponse = [];
@@ -32,6 +37,7 @@ class RecordingApiClient extends ApiClient {
   public static function reset(): void {
     self::$calls = [];
     self::$failWith = NULL;
+    self::$failPath = NULL;
     self::$bulkResponse = [];
   }
 
@@ -52,8 +58,8 @@ class RecordingApiClient extends ApiClient {
   /**
    * {@inheritdoc}
    */
-  protected function request(string $method, string $path, ?array $body = NULL): array {
-    if (self::$failWith) {
+  protected function request(string $method, string $path, ?array $body = NULL, ?int $timeout = NULL): array {
+    if (self::$failWith && (self::$failPath === NULL || self::$failPath === $path)) {
       throw self::$failWith;
     }
     self::$calls[] = ['path' => $path, 'body' => $body];

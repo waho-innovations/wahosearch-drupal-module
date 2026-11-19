@@ -74,6 +74,8 @@ final class SyncForm extends FormBase {
 
     $counts = $this->tracker->countByStatus();
     $lastFull = $this->syncManager->getLastFullSync();
+    $lastSuccess = $this->syncManager->getLastSuccess();
+    $lastReconcile = $this->syncManager->getLastReconcile();
     $lastError = $this->log->getLastError();
 
     $form['status'] = [
@@ -83,10 +85,19 @@ final class SyncForm extends FormBase {
       '#rows' => [
         [$this->t('Indexed documents'), (string) $counts[ItemTracker::STATUS_INDEXED]],
         [$this->t('Documents with errors'), (string) $counts[ItemTracker::STATUS_ERROR]],
+        [$this->t('Documents held back by the platform'), (string) $counts[ItemTracker::STATUS_DEFERRED]],
         [$this->t('Changes waiting to be sent'), (string) $this->syncManager->getQueueSize()],
         [
           $this->t('Last full synchronization'),
           $lastFull ? $this->dateFormatter->format($lastFull, 'short') : $this->t('Never'),
+        ],
+        [
+          $this->t('Last successful synchronization'),
+          $lastSuccess ? $this->dateFormatter->format($lastSuccess, 'short') : $this->t('Never'),
+        ],
+        [
+          $this->t('Last reconciliation'),
+          $lastReconcile ? $this->dateFormatter->format($lastReconcile, 'short') : $this->t('Never'),
         ],
         [
           $this->t('Last error'),

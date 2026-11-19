@@ -18,6 +18,8 @@ class ItemTracker {
 
   public const STATUS_ERROR = 'error';
 
+  public const STATUS_DEFERRED = 'deferred';
+
   public function __construct(
     protected Connection $database,
     protected TimeInterface $time,
@@ -71,6 +73,40 @@ class ItemTracker {
         'last_error' => mb_substr($message, 0, 1000),
       ])
       ->execute();
+  }
+
+  /**
+   * Records a document the platform is holding back, for example over quota.
+   *
+   * No hash is kept, so it is offered again on the next run.
+   */
+  public function markDeferred(array $document, string $reason): void {
+    $this->database->merge(self::TABLE)
+      ->keys(['doc_id' => $document['id']])
+      ->fields([
+        'entity_type' => $document['entity_type'],
+        'entity_id' => $document['entity_id'],
+        'langcode' => $document['langcode'],
+        'bundle' => $document['bundle'],
+        'status' => self::STATUS_DEFERRED,
+        'hash' => NULL,
+        'last_synced' => $this->time->getCurrentTime(),
+        'last_error' => mb_substr($reason, 0, 1000),
+      ])
+      ->execute();
+  }
+
+  /**
+   * Returns the IDs of all tracked entities of a type.
+   */
+  public function getTrackedEntityIds(string $entityType): array {
+    $ids = $this->database->select(self::TABLE, 'i')
+      ->fields('i', ['entity_id'])
+      ->condition('entity_type', $entityType)
+      ->distinct()
+      ->execute()
+      ->fetchCol();
+    return array_map('intval', $ids);
   }
 
   /**
@@ -139,10 +175,10 @@ class ItemTracker {
    * Returns document counts keyed by status.
    *
    * @return array<string, int>
-   *   Always contains the indexed and error keys.
+   *   Always contains the indexed, error and deferred keys.
    */
   public function countByStatus(): array {
-    $counts = [self::STATUS_INDEXED => 0, self::STATUS_ERROR => 0];
+    $counts = [self::STATUS_INDEXED => 0, self::STATUS_ERROR => 0, self::STATUS_DEFERRED => 0];
     $query = $this->database->select(self::TABLE, 'i')->fields('i', ['status']);
     $query->addExpression('COUNT(*)', 'total');
     foreach ($query->groupBy('status')->execute() as $row) {

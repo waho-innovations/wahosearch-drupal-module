@@ -24,6 +24,24 @@ class SyncManager implements DestructableInterface {
 
   public const STATE_LAST_FULL_SYNC = 'wahosearch_connector.last_full_sync';
 
+  public const STATE_LAST_SUCCESS = 'wahosearch_connector.last_success';
+
+  public const STATE_LAST_RECONCILE = 'wahosearch_connector.last_reconcile';
+
+  public const STATE_RECONCILE_REQUESTED = 'wahosearch_connector.reconcile_requested';
+
+  public const STATE_CONNECTION = 'wahosearch_connector.connection';
+
+  /**
+   * State key holding the plan and the search page it allows.
+   */
+  public const STATE_PLAN = 'wahosearch_connector.plan';
+
+  /**
+   * Seconds between plan checks on cron.
+   */
+  public const PLAN_CHECK_INTERVAL = 86400;
+
   /**
    * Seconds spent sending changes at the end of an editor's request.
    */
@@ -115,6 +133,151 @@ class SyncManager implements DestructableInterface {
       $this->enqueue('node', $id);
     }
     return count($ids);
+  }
+
+  /**
+   * Rechecks all content soon after a change that affects who can see it.
+   */
+  public function onPermissionsChanged(): void {
+    if ($this->autoSyncEnabled()) {
+      $this->requestReconciliation();
+    }
+  }
+
+  /**
+   * Asks for a reconciliation at the end of this request, or on the next cron.
+   */
+  public function requestReconciliation(): void {
+    $this->state->set(self::STATE_RECONCILE_REQUESTED, TRUE);
+  }
+
+  /**
+   * Queues everything that should be compared with the platform.
+   *
+   * Only real differences are sent, because unchanged documents keep their
+   * hash. Anything tracked that is no longer eligible gets removed.
+   *
+   * @return int
+   *   Number of items queued.
+   */
+  public function queueReconciliation(): int {
+    $this->state->delete(self::STATE_RECONCILE_REQUESTED);
+    $ids = [];
+    foreach ($this->selection->getEnabledBundles() as $bundle) {
+      $nids = $this->entityTypeManager->getStorage('node')->getQuery()
+        ->accessCheck(FALSE)
+        ->condition('type', $bundle)
+        ->execute();
+      foreach ($nids as $nid) {
+        $ids[(int) $nid] = (int) $nid;
+      }
+    }
+    foreach ($this->tracker->getTrackedEntityIds('node') as $id) {
+      $ids[$id] = $id;
+    }
+    foreach ($ids as $id) {
+      $this->enqueue('node', $id);
+    }
+    $queued = count($ids);
+    $vocabularies = $this->selection->getReferencedVocabularies();
+    if ($vocabularies) {
+      $tids = $this->entityTypeManager->getStorage('taxonomy_term')->getQuery()
+        ->accessCheck(FALSE)
+        ->condition('vid', $vocabularies, 'IN')
+        ->execute();
+      foreach ($tids as $tid) {
+        $this->enqueue('taxonomy_term', (int) $tid);
+      }
+      $queued += count($tids);
+    }
+    $this->state->set(self::STATE_LAST_RECONCILE, $this->time->getCurrentTime());
+    $this->log->info('reconcile', sprintf('Reconciliation queued %d items.', $queued));
+    return $queued;
+  }
+
+  /**
+   * Runs a requested or scheduled reconciliation. Called from cron.
+   */
+  public function reconcileIfDue(): void {
+    if (!$this->apiClient->isConfigured()) {
+      return;
+    }
+    if ($this->state->get(self::STATE_RECONCILE_REQUESTED)) {
+      $this->queueReconciliation();
+      return;
+    }
+    $days = (int) $this->configFactory->get('wahosearch_connector.settings')->get('reconcile_days');
+    if (!$this->autoSyncEnabled() || $days < 1 || $this->getQueueSize() > 0) {
+      return;
+    }
+    if ((int) $this->state->get(self::STATE_LAST_RECONCILE, 0) + $days * 86400 <= $this->time->getCurrentTime()) {
+      $this->queueReconciliation();
+    }
+  }
+
+  /**
+   * Tests the connection and remembers the result.
+   *
+   * @throws \Drupal\wahosearch_connector\Exception\ApiException
+   *   If the platform refuses or cannot be reached.
+   */
+  public function testConnection(): array {
+    $now = $this->time->getCurrentTime();
+    try {
+      $response = $this->apiClient->ping();
+    }
+    catch (ApiException $e) {
+      $this->state->set(self::STATE_CONNECTION, ['ok' => FALSE, 'time' => $now, 'message' => $e->getMessage()]);
+      $this->log->error('connection', 'Connection test failed: ' . $e->getMessage());
+      throw $e;
+    }
+    $this->state->set(self::STATE_CONNECTION, ['ok' => TRUE, 'time' => $now, 'message' => '']);
+    $this->log->info('connection', 'Connection test succeeded.');
+    if (isset($response['search_page']) && in_array($response['search_page'], ['drupal', 'hosted'], TRUE)) {
+      $this->state->set(self::STATE_PLAN, [
+        'plan' => is_string($response['plan'] ?? NULL) ? $response['plan'] : '',
+        'search_page' => $response['search_page'],
+        'time' => $now,
+      ]);
+    }
+    return $response;
+  }
+
+  /**
+   * Checks the plan again once a day, so a plan change reaches the site.
+   */
+  public function refreshPlanIfDue(): void {
+    $plan = $this->state->get(self::STATE_PLAN);
+    if (!$this->apiClient->isConfigured() || (is_array($plan) && $this->time->getCurrentTime() - (int) ($plan['time'] ?? 0) < self::PLAN_CHECK_INTERVAL)) {
+      return;
+    }
+    try {
+      $this->testConnection();
+    }
+    catch (ApiException) {
+      // Already logged. The last known plan stays in use.
+    }
+  }
+
+  /**
+   * Returns the last connection test result, if any.
+   */
+  public function getConnectionStatus(): ?array {
+    return $this->state->get(self::STATE_CONNECTION);
+  }
+
+  /**
+   * Returns the time content was last delivered to the platform.
+   */
+  public function getLastSuccess(): ?int {
+    return $this->state->get(self::STATE_LAST_SUCCESS);
+  }
+
+  /**
+   * Returns the time of the last reconciliation.
+   */
+  public function getLastReconcile(): ?int {
+    return $this->state->get(self::STATE_LAST_RECONCILE);
   }
 
   /**
@@ -290,11 +453,17 @@ class SyncManager implements DestructableInterface {
    * Sends changes after the response so editors never wait for the platform.
    */
   public function destruct(): void {
-    if (!$this->queuedThisRequest || !$this->configFactory->get('wahosearch_connector.settings')->get('immediate')) {
+    $reconcile = (bool) $this->state->get(self::STATE_RECONCILE_REQUESTED);
+    if (!$reconcile && !$this->queuedThisRequest) {
       return;
     }
     try {
-      $this->processQueue(self::IMMEDIATE_SECONDS);
+      if ($reconcile) {
+        $this->queueReconciliation();
+      }
+      if ($this->configFactory->get('wahosearch_connector.settings')->get('immediate')) {
+        $this->processQueue(self::IMMEDIATE_SECONDS);
+      }
     }
     catch (\Throwable $e) {
       // Cron picks the work up later. A sync problem must never break a page.
@@ -320,23 +489,81 @@ class SyncManager implements DestructableInterface {
       return count($documents);
     }
 
-    $rejected = [];
-    foreach ($response['rejected'] ?? [] as $entry) {
-      if (is_array($entry) && isset($entry['id'])) {
-        $rejected[(string) $entry['id']] = (string) ($entry['message'] ?? 'Rejected by the platform.');
-      }
-    }
+    $rejected = $this->messagesById($response['rejected'] ?? [], 'Rejected by the platform.');
+    $deferred = $this->messagesById($response['deferred'] ?? [], 'Held back by the platform.');
+    $needFiles = array_flip(array_filter((array) ($response['need_files'] ?? []), 'is_string'));
+    $failed = 0;
+    $sent = 0;
     foreach ($documents as $id => $document) {
       if (isset($rejected[$id])) {
         $this->markDocumentFailed($document, $rejected[$id]);
         $this->log->error('upsert', $rejected[$id], (string) $id);
+        $failed++;
+      }
+      elseif (isset($deferred[$id])) {
+        $this->tracker->markDeferred($document, $deferred[$id]);
+        $this->log->warning('deferred', $deferred[$id], (string) $id);
+      }
+      elseif (isset($needFiles[$id]) && isset($document['file']) && !$this->uploadDocumentFile($document)) {
+        $failed++;
       }
       else {
         $this->tracker->markIndexed($document);
+        $sent++;
       }
     }
-    $this->log->info('upsert', sprintf('%d documents sent.', count($documents) - count($rejected)), (string) array_key_first($documents));
-    return count(array_intersect_key($rejected, $documents));
+    if ($sent) {
+      $this->state->set(self::STATE_LAST_SUCCESS, $this->time->getCurrentTime());
+    }
+    $this->log->info('upsert', sprintf('%d documents sent.', $sent), (string) array_key_first($documents));
+    return $failed;
+  }
+
+  /**
+   * Indexes a list of {id, message} entries by ID.
+   *
+   * @return array<string, string>
+   *   Messages keyed by document ID.
+   */
+  protected function messagesById(mixed $entries, string $default): array {
+    $messages = [];
+    foreach (is_array($entries) ? $entries : [] as $entry) {
+      if (is_array($entry) && isset($entry['id'])) {
+        $messages[(string) $entry['id']] = (string) ($entry['message'] ?? $default);
+      }
+    }
+    return $messages;
+  }
+
+  /**
+   * Uploads the file of a PDF document.
+   *
+   * @return bool
+   *   FALSE if the file failed permanently.
+   *
+   * @throws \Drupal\wahosearch_connector\Exception\ApiException
+   *   Only for failures worth retrying.
+   */
+  protected function uploadDocumentFile(array $document): bool {
+    $file = $this->entityTypeManager->getStorage('file')->load($document['file']['fid']);
+    $content = $file && is_readable($file->getFileUri()) ? file_get_contents($file->getFileUri()) : FALSE;
+    if ($content === FALSE) {
+      $this->markDocumentFailed($document, 'The file could not be read.');
+      $this->log->error('pdf', 'The file could not be read.', $document['id']);
+      return FALSE;
+    }
+    try {
+      $this->apiClient->uploadFile($document['id'], $document['file'], $content);
+    }
+    catch (ApiException $e) {
+      if ($e->isRetryable()) {
+        throw $e;
+      }
+      $this->markDocumentFailed($document, $e->getMessage());
+      $this->log->error('pdf', $e->getMessage(), $document['id']);
+      return FALSE;
+    }
+    return TRUE;
   }
 
   /**

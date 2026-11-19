@@ -177,4 +177,54 @@ class ApiClientTest extends UnitTestCase {
     $client->ping();
   }
 
+  /**
+   * File uploads are signed like every other request.
+   */
+  public function testUploadFile(): void {
+    $client = $this->client([new Response(200, [], '{}')]);
+    $client->uploadFile('node:1:en:file:2', ['filename' => 'a.pdf', 'mime' => 'application/pdf', 'sha256' => 'abc'], 'PDFDATA');
+    $request = $this->history[0]['request'];
+    $body = (string) $request->getBody();
+    $this->assertSame('/api/v1/content/file', $request->getUri()->getPath());
+    $this->assertSame(base64_encode('PDFDATA'), json_decode($body, TRUE)['content_base64']);
+    $this->assertSame(ApiClient::sign(self::SECRET, '1800000000', 'POST', '/api/v1/content/file', $body), $request->getHeaderLine('X-Signature'));
+    $this->assertSame(120, $this->history[0]['options']['timeout']);
+  }
+
+
+  /**
+   * Searches are signed and sent to the search endpoint.
+   */
+  public function testSearch(): void {
+    $client = $this->client([new Response(200, [], '{"results":[],"has_more":false}')]);
+
+    $this->assertSame(['results' => [], 'has_more' => FALSE], $client->search(['query' => 'souris', 'langcode' => 'fr', 'roles' => [], 'page' => 1]));
+
+    $request = $this->history[0]['request'];
+    $this->assertSame('https://platform.example/api/v1/search', (string) $request->getUri());
+    $this->assertSame(['query' => 'souris', 'langcode' => 'fr', 'roles' => [], 'page' => 1], json_decode((string) $request->getBody(), TRUE));
+    $this->assertSame(10, $this->history[0]['options']['timeout']);
+  }
+
+  /**
+   * The platform's error code, message and wait time are kept.
+   */
+  public function testErrorDetailsAreKept(): void {
+    $client = $this->client([
+      new Response(429, ['Retry-After' => '17'], '{"code":"rate_limited","message":"Trop de recherches."}'),
+    ]);
+
+    try {
+      $client->search(['query' => 'souris', 'langcode' => 'fr']);
+      $this->fail('An exception was expected.');
+    }
+    catch (ApiException $e) {
+      $this->assertSame(429, $e->getStatusCode());
+      $this->assertSame('rate_limited', $e->getErrorCode());
+      $this->assertSame('Trop de recherches.', $e->getPlatformMessage());
+      $this->assertSame(17, $e->getRetryAfter());
+      $this->assertTrue($e->isRetryable());
+    }
+  }
+
 }

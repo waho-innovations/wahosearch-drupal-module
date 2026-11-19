@@ -6,6 +6,9 @@ namespace Drupal\wahosearch_connector\Form;
 
 use Drupal\wahosearch_connector\Exception\ApiException;
 use Drupal\wahosearch_connector\Service\ApiClient;
+use Drupal\wahosearch_connector\Service\SyncLog;
+use Drupal\wahosearch_connector\Service\SyncManager;
+use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -21,11 +24,29 @@ final class ConnectionSettingsForm extends ConfigFormBase {
   private ApiClient $apiClient;
 
   /**
+   * The sync manager.
+   */
+  private SyncManager $syncManager;
+
+  /**
+   * The sync log.
+   */
+  private SyncLog $log;
+
+  /**
+   * The date formatter.
+   */
+  private DateFormatterInterface $dateFormatter;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container): static {
     $instance = parent::create($container);
     $instance->apiClient = $container->get('wahosearch_connector.api_client');
+    $instance->syncManager = $container->get('wahosearch_connector.sync_manager');
+    $instance->log = $container->get('wahosearch_connector.sync_log');
+    $instance->dateFormatter = $container->get('date.formatter');
     return $instance;
   }
 
@@ -48,6 +69,27 @@ final class ConnectionSettingsForm extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
     $config = $this->config('wahosearch_connector.settings');
+
+    $status = $this->syncManager->getConnectionStatus();
+    $lastSuccess = $this->syncManager->getLastSuccess();
+    $form['#cache']['max-age'] = 0;
+    $form['status'] = [
+      '#type' => 'item',
+      '#title' => $this->t('Connection status'),
+      '#markup' => match (TRUE) {
+        $status === NULL => $this->t('Not tested yet.'),
+        $status['ok'] => $this->t('Connected, checked @date.', ['@date' => $this->dateFormatter->format($status['time'], 'short')]),
+        default => $this->t('Not connected, checked @date: @reason', [
+          '@date' => $this->dateFormatter->format($status['time'], 'short'),
+          '@reason' => $status['message'],
+        ]),
+      },
+    ];
+    $form['last_success'] = [
+      '#type' => 'item',
+      '#title' => $this->t('Last successful synchronization'),
+      '#markup' => $lastSuccess ? $this->dateFormatter->format($lastSuccess, 'short') : $this->t('Never'),
+    ];
 
     $form['connection'] = [
       '#type' => 'fieldset',
@@ -81,7 +123,7 @@ final class ConnectionSettingsForm extends ConfigFormBase {
         '#type' => 'password',
         '#title' => $this->t('Secret key'),
         '#description' => $hasSecret
-          ? $this->t('A secret key is saved. Leave this empty to keep it.')
+          ? $this->t('A secret key is saved. Leave this empty to keep it, or enter a new one to replace it.')
           : $this->t('Shown once when the website is created on the platform.'),
         '#required' => !$hasSecret,
         '#attributes' => ['autocomplete' => 'new-password'],
@@ -129,6 +171,24 @@ final class ConnectionSettingsForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
 
+    $form['behaviour']['reconcile_days'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Days between automatic reconciliation runs'),
+      '#description' => $this->t('Compares all content with the platform and fixes differences. Enter 0 to turn this off.'),
+      '#default_value' => $config->get('reconcile_days'),
+      '#min' => 0,
+      '#max' => 90,
+      '#required' => TRUE,
+    ];
+    $form['behaviour']['pdf_max_mb'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Largest PDF to send, in megabytes'),
+      '#default_value' => $config->get('pdf_max_mb'),
+      '#min' => 1,
+      '#max' => 100,
+      '#required' => TRUE,
+    ];
+
     $form = parent::buildForm($form, $form_state);
     $form['actions']['submit']['#value'] = $this->t('Save and test connection');
     return $form;
@@ -157,17 +217,21 @@ final class ConnectionSettingsForm extends ConfigFormBase {
       ->set('batch_size', (int) $form_state->getValue('batch_size'))
       ->set('timeout', (int) $form_state->getValue('timeout'))
       ->set('log_retention_days', (int) $form_state->getValue('log_retention_days'))
+      ->set('reconcile_days', (int) $form_state->getValue('reconcile_days'))
+      ->set('pdf_max_mb', (int) $form_state->getValue('pdf_max_mb'))
       ->save();
 
     $secret = (string) $form_state->getValue('secret');
     if ($secret !== '') {
+      $replaced = (bool) $this->apiClient->getSecret();
       $this->apiClient->setSecret($secret);
+      $this->log->info('connection', $replaced ? 'Secret key replaced.' : 'Secret key saved.');
     }
 
     parent::submitForm($form, $form_state);
 
     try {
-      $response = $this->apiClient->ping();
+      $response = $this->syncManager->testConnection();
       $this->messenger()->addStatus($this->t('Connected to the platform as %site.', [
         '%site' => (string) ($response['site_name'] ?? $form_state->getValue('site_id')),
       ]));

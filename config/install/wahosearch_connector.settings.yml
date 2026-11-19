@@ -5,4 +5,12 @@ batch_size: 25
 sync_on_save: true
 immediate: true
 log_retention_days: 30
+reconcile_days: 7
+pdf_max_mb: 25
+include_paths: ''
+exclude_paths: ''
+priority_sections: ''
+search_page: false
+search_mode: drupal
+chatbot: false
 bundles: {}

@@ -61,8 +61,35 @@ Creates or replaces documents by `id`. Must be idempotent.
 Optional response, to refuse single documents without failing the others:
 
 ```json
-{ "rejected": [ { "id": "node:12:fr", "message": "Too large" } ] }
+{
+  "rejected": [ { "id": "node:12:fr", "message": "Too large" } ],
+  "deferred": [ { "id": "node:13:en", "message": "Page quota reached" } ],
+  "need_files": [ "node:14:en:file:44" ]
+}
 ```
+
+- `rejected` is a failure. It shows in the log and can be retried.
+- `deferred` is not a failure and does not stop a full sync from finishing.
+  Use it for quota limits and for PDFs with no extractable text. The module
+  offers these documents again on later runs.
+- `need_files` lists PDF documents whose contents the platform needs. Leave out
+  any document whose `file.sha256` it already holds.
+
+### `POST content/file`
+
+Sent once for each ID in `need_files`, with a 120 second timeout.
+
+```json
+{
+  "id": "node:14:en:file:44",
+  "filename": "handbook.pdf",
+  "mime": "application/pdf",
+  "sha256": "...",
+  "content_base64": "..."
+}
+```
+
+Verify `sha256` before storing the file.
 
 ### `POST content/delete`
 
@@ -110,6 +137,50 @@ this website that was not received with this `sync_id`.
 The module only calls this when every item of the run was delivered. An
 unfinished run must change nothing except the documents it sent.
 
+### `POST search`
+
+Sent when a visitor searches on the Drupal search page. Times out after 10
+seconds.
+
+```json
+{"query": "logement des souris", "langcode": "fr", "roles": ["authenticated", "member"], "page": 1}
+```
+
+- `langcode` is the language of the page. Results must be in that language
+  only.
+- `roles` are the visitor's roles, empty for anonymous visitors. Only public
+  content and content allowed for one of these roles may be returned.
+- `page` is 1 to 20.
+
+Response:
+
+```json
+{
+  "has_more": true,
+  "results": [
+    {"id": "node:412:fr:file:977", "type": "file", "title": "...", "url": "https://...",
+     "snippet": "...", "heading": ["..."], "content_type": "Document", "tags": [],
+     "parent": {"id": "node:412:fr", "title": "...", "url": "https://..."}}
+  ]
+}
+```
+
+Errors are `{"code": "...", "message": "..."}` with `message` in the language
+of the request. `403 hosted_page_only` means the plan (Free) only allows the
+hosted page: the module then shows `{platform URL}/embed/{site ID}/search` in a
+frame instead.
+
+`GET connector/ping` also returns `plan` and `search_page` (`drupal` or
+`hosted`), which the module keeps to choose the page. The module shows `message` to visitors for `rate_limited`,
+`search_limit_reached`, `search_busy` and `empty_query`, and a general message
+for anything else.
+
+## Chatbot
+
+When an administrator switches it on, Drupal loads
+`{platform URL}/widget/chatbot.js` on public pages. The script tag has
+`data-site-id` and `data-language`. The secret is never given to the browser.
+
 ## Document format
 
 One document per published translation.
@@ -153,6 +224,41 @@ One document per published translation.
 ```
 
 `role` is one of `content`, `summary` or `metadata`.
+
+A document can also carry `priority_section`, for example
+`{"pattern": "/admissions/*", "rank": 1}`, where rank 1 is the most important.
+It only ever applies to whole sections. Treat it as a capped signal inside
+relevance scoring, and when choosing what to index first under a quota.
+
+### PDF documents
+
+A PDF is its own document with the same access as the page it is attached to.
+Web pages have no `document_type` key.
+
+```json
+{
+  "id": "node:14:en:file:44",
+  "document_type": "pdf",
+  "entity_type": "node",
+  "entity_id": 14,
+  "uuid": "...",
+  "bundle": "page",
+  "bundle_label": "Basic page",
+  "langcode": "en",
+  "title": "Admissions handbook",
+  "url": "https://example.ca/sites/default/files/handbook.pdf",
+  "created": "2026-11-08T10:00:00+00:00",
+  "changed": "2026-11-08T11:00:00+00:00",
+  "parent": { "id": "node:14:en", "title": "Admissions", "url": "https://example.ca/admissions" },
+  "file": { "fid": 44, "filename": "handbook.pdf", "mime": "application/pdf", "size": 120400, "sha256": "..." },
+  "taxonomy": [],
+  "access": { "public": true, "roles": ["anonymous", "authenticated"] },
+  "hash": "..."
+}
+```
+
+The platform extracts the text. The module only sends files with the PDF MIME
+type, and it cannot tell whether a PDF is scanned.
 
 ### Value shape by field type
 

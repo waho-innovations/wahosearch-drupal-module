@@ -1,6 +1,8 @@
-name: 'WahoSearch Connector test support'
+name: 'WahoSearch Connector test'
 type: module
-description: 'Access rules used by the WahoSearch Connector tests.'
+description: 'Answers searches with canned results. For tests only.'
 package: Testing
 hidden: true
 core_version_requirement: ^10.2 || ^11
+dependencies:
+  - wahosearch_connector:wahosearch_connector

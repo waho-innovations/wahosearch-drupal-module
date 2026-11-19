@@ -6,6 +6,7 @@ namespace Drupal\wahosearch_connector\Form;
 
 use Drupal\wahosearch_connector\Service\ContentSelection;
 use Drupal\wahosearch_connector\Service\ItemTracker;
+use Drupal\wahosearch_connector\Service\SyncLog;
 use Drupal\wahosearch_connector\Service\SyncManager;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
@@ -24,6 +25,7 @@ final class ContentTypesForm extends FormBase {
     private readonly ItemTracker $tracker,
     private readonly SyncManager $syncManager,
     private readonly EntityTypeManagerInterface $entityTypeManager,
+    private readonly SyncLog $log,
   ) {}
 
   /**
@@ -35,6 +37,7 @@ final class ContentTypesForm extends FormBase {
       $container->get('wahosearch_connector.tracker'),
       $container->get('wahosearch_connector.sync_manager'),
       $container->get('entity_type.manager'),
+      $container->get('wahosearch_connector.sync_log'),
     );
   }
 
@@ -61,6 +64,7 @@ final class ContentTypesForm extends FormBase {
         $this->t('Content type'),
         $this->t('Index'),
         $this->t('Include restricted content'),
+        $this->t('Include PDFs'),
         $this->t('Published items'),
         $this->t('Indexed documents'),
         $this->t('Fields'),
@@ -89,6 +93,12 @@ final class ContentTypesForm extends FormBase {
         '#title_display' => 'invisible',
         '#default_value' => !empty($settings[$bundle]['include_private']),
       ];
+      $form['bundles'][$bundle]['include_pdfs'] = [
+        '#type' => 'checkbox',
+        '#title' => $this->t('Include PDF files of @type', ['@type' => $label]),
+        '#title_display' => 'invisible',
+        '#default_value' => !empty($settings[$bundle]['include_pdfs']),
+      ];
       $form['bundles'][$bundle]['published'] = ['#plain_text' => (string) $published];
       $form['bundles'][$bundle]['indexed'] = ['#plain_text' => (string) $this->tracker->countIndexedForBundle($bundle)];
       $form['bundles'][$bundle]['fields'] = Link::fromTextAndUrl(
@@ -100,6 +110,10 @@ final class ContentTypesForm extends FormBase {
     $form['help'] = [
       '#markup' => '<p>' . $this->t('Restricted content is content that anonymous visitors cannot open. When it is included, the roles allowed to view it are sent with it.') . '</p>',
     ];
+    $form['confirm_removal'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('I understand that unticking a content type removes its content from search'),
+    ];
     $form['actions'] = ['#type' => 'actions'];
     $form['actions']['submit'] = [
       '#type' => 'submit',
@@ -107,6 +121,26 @@ final class ContentTypesForm extends FormBase {
       '#button_type' => 'primary',
     ];
     return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state): void {
+    $settings = $this->selection->getBundleSettings();
+    $labels = $this->selection->getAllBundles();
+    $leaving = [];
+    foreach ($form_state->getValue('bundles') ?: [] as $bundle => $row) {
+      if (empty($row['enabled']) && !empty($settings[$bundle]['enabled'])) {
+        $count = $this->tracker->countIndexedForBundle($bundle);
+        if ($count > 0) {
+          $leaving[] = ($labels[$bundle] ?? $bundle) . ' (' . $count . ')';
+        }
+      }
+    }
+    if ($leaving && !$form_state->getValue('confirm_removal')) {
+      $form_state->setErrorByName('confirm_removal', $this->t('This removes indexed documents from search: @list. Tick the confirmation to continue.', ['@list' => implode(', ', $leaving)]));
+    }
   }
 
   /**
@@ -125,8 +159,11 @@ final class ContentTypesForm extends FormBase {
       $wasEnabled = !empty($before[$bundle]['enabled']);
       $hadPrivate = !empty($before[$bundle]['include_private']);
 
-      $after[$bundle] = ['enabled' => $enabled, 'include_private' => $private] + ($before[$bundle] ?? []);
-      if ($enabled && (!$wasEnabled || $hadPrivate !== $private)) {
+      $pdfs = (bool) $row['include_pdfs'];
+      $hadPdfs = !empty($before[$bundle]['include_pdfs']);
+
+      $after[$bundle] = ['enabled' => $enabled, 'include_private' => $private, 'include_pdfs' => $pdfs] + ($before[$bundle] ?? []);
+      if ($enabled && (!$wasEnabled || $hadPrivate !== $private || $hadPdfs !== $pdfs)) {
         $changed[] = $bundle;
       }
       elseif (!$enabled && $wasEnabled) {
@@ -135,6 +172,10 @@ final class ContentTypesForm extends FormBase {
     }
 
     $config->set('bundles', $after)->save();
+
+    if ($changed || $removed) {
+      $this->log->info('config', sprintf('Content types changed by user %d. Updated: %s. Removed: %s.', $this->currentUser()->id(), implode(', ', $changed) ?: 'none', implode(', ', $removed) ?: 'none'));
+    }
 
     $queued = 0;
     foreach ($changed as $bundle) {

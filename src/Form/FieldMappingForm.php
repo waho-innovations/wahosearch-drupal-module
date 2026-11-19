@@ -57,7 +57,7 @@ final class FieldMappingForm extends FormBase {
     $mapping = $this->selection->getFieldMapping($bundle);
 
     $form['intro'] = [
-      '#markup' => '<p>' . $this->t('The title, address, language and dates are always sent. Choose the other fields to include.') . '</p>',
+      '#markup' => '<p>' . $this->t('The title, address, language and dates are always sent. Choose the other fields to include.') . '</p><p>' . $this->t('Tick "Only without PDF" for a field that holds a copy of the text of the attached file: it is then sent only for items whose PDF is not indexed, such as Word or Excel files, so the same text is not indexed twice.') . '</p>',
     ];
     $form['fields'] = [
       '#type' => 'table',
@@ -68,6 +68,7 @@ final class FieldMappingForm extends FormBase {
         $this->t('Include'),
         $this->t('Name in search index'),
         $this->t('Used as'),
+        $this->t('Only without PDF'),
       ],
       '#empty' => $this->t('This content type has no fields that can be indexed.'),
     ];
@@ -107,6 +108,12 @@ final class FieldMappingForm extends FormBase {
         '#title_display' => 'invisible',
         '#options' => $roles,
         '#default_value' => isset($mapping[$name]['role'], $roles[$mapping[$name]['role']]) ? $mapping[$name]['role'] : array_key_first($roles),
+      ];
+      $form['fields'][$name]['pdf_fallback'] = $isTaxonomy ? ['#markup' => ''] : [
+        '#type' => 'checkbox',
+        '#title' => $this->t('Send @field only when no PDF of the item is indexed', ['@field' => $label]),
+        '#title_display' => 'invisible',
+        '#default_value' => !empty($mapping[$name]['pdf_fallback']),
       ];
     }
 
@@ -148,6 +155,9 @@ final class FieldMappingForm extends FormBase {
     foreach ($form_state->getValue('fields') ?: [] as $name => $row) {
       if (!empty($row['include'])) {
         $mapping[$name] = ['target' => trim((string) $row['target']), 'role' => (string) $row['role']];
+        if (!empty($row['pdf_fallback'])) {
+          $mapping[$name]['pdf_fallback'] = TRUE;
+        }
       }
     }
 

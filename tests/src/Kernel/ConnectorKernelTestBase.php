@@ -38,6 +38,7 @@ abstract class ConnectorKernelTestBase extends KernelTestBase {
     'language',
     'content_translation',
     'path_alias',
+    'file',
     'wahosearch_connector',
   ];
 
@@ -120,6 +121,7 @@ abstract class ConnectorKernelTestBase extends KernelTestBase {
       ->set('immediate', FALSE)
       ->save();
 
+    $this->container->get('state')->delete(SyncManager::STATE_RECONCILE_REQUESTED);
     RecordingApiClient::reset();
   }
 

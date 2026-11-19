@@ -67,8 +67,8 @@ msgstr "Clé secrète"
 msgid "The secret key is set in settings.php."
 msgstr "La clé secrète est définie dans settings.php."
 
-msgid "A secret key is saved. Leave this empty to keep it."
-msgstr "Une clé secrète est enregistrée. Laissez ce champ vide pour la conserver."
+msgid "A secret key is saved. Leave this empty to keep it, or enter a new one to replace it."
+msgstr "Une clé secrète est enregistrée. Laissez ce champ vide pour la conserver, ou saisissez-en une nouvelle pour la remplacer."
 
 msgid "Shown once when the website is created on the platform."
 msgstr "Affichée une seule fois lors de la création du site Web sur la plateforme."
@@ -363,3 +363,207 @@ msgstr "@label <small>(@name)</small>"
 
 msgid "Connects this site to the hosted WahoSearch platform. Choose the content types and fields to index, then run a full synchronization. After that, changes are sent automatically."
 msgstr "Connecte ce site à la plateforme WahoSearch hébergée. Choisissez les types de contenu et les champs à indexer, puis lancez une synchronisation complète. Ensuite, les modifications sont envoyées automatiquement."
+
+msgid "Indexing rules"
+msgstr "Règles d'indexation"
+
+msgid "Search display"
+msgstr "Affichage de la recherche"
+
+msgid "WahoSearch box"
+msgstr "Boîte de recherche WahoSearch"
+
+msgid "Include PDFs"
+msgstr "Inclure les PDF"
+
+msgid "Include PDF files of @type"
+msgstr "Inclure les fichiers PDF de @type"
+
+msgid "I understand that unticking a content type removes its content from search"
+msgstr "Je comprends que décocher un type de contenu retire son contenu de la recherche"
+
+msgid "This removes indexed documents from search: @list. Tick the confirmation to continue."
+msgstr "Cette action retire des documents indexés de la recherche : @list. Cochez la confirmation pour continuer."
+
+msgid "Connection status"
+msgstr "État de la connexion"
+
+msgid "Not tested yet."
+msgstr "Pas encore testée."
+
+msgid "Connected, checked @date."
+msgstr "Connecté, vérifié le @date."
+
+msgid "Not connected, checked @date: @reason"
+msgstr "Non connecté, vérifié le @date : @reason"
+
+msgid "Last successful synchronization"
+msgstr "Dernière synchronisation réussie"
+
+msgid "Days between automatic reconciliation runs"
+msgstr "Jours entre les rapprochements automatiques"
+
+msgid "Compares all content with the platform and fixes differences. Enter 0 to turn this off."
+msgstr "Compare tout le contenu avec la plateforme et corrige les écarts. Saisissez 0 pour désactiver."
+
+msgid "Largest PDF to send, in megabytes"
+msgstr "Taille maximale des PDF à envoyer, en mégaoctets"
+
+msgid "Documents held back by the platform"
+msgstr "Documents retenus par la plateforme"
+
+msgid "Last reconciliation"
+msgstr "Dernier rapprochement"
+
+msgid "One path per line. Use * as a wildcard, for example /news/*. These rules apply on top of the content types you selected."
+msgstr "Un chemin par ligne. Utilisez * comme caractère générique, par exemple /news/*. Ces règles s'ajoutent aux types de contenu sélectionnés."
+
+msgid "Only index these paths"
+msgstr "Indexer seulement ces chemins"
+
+msgid "Leave empty to allow every path."
+msgstr "Laissez vide pour autoriser tous les chemins."
+
+msgid "Never index these paths"
+msgstr "Ne jamais indexer ces chemins"
+
+msgid "These always win over the list above."
+msgstr "Ces chemins ont toujours priorité sur la liste ci-dessus."
+
+msgid "Priority sections"
+msgstr "Sections prioritaires"
+
+msgid "Most important first. Each line must be a whole section ending in /*, for example /admissions/*. Single pages cannot be prioritized, so results stay relevance first."
+msgstr "La plus importante d'abord. Chaque ligne doit être une section entière se terminant par /*, par exemple /admissions/*. Les pages individuelles ne peuvent pas être priorisées, afin que la pertinence reste le premier critère."
+
+msgid "Effect of these rules on published content"
+msgstr "Effet de ces règles sur le contenu publié"
+
+msgid "Change"
+msgstr "Changement"
+
+msgid "Items"
+msgstr "Éléments"
+
+msgid "Examples"
+msgstr "Exemples"
+
+msgid "Will be added"
+msgstr "Seront ajoutés"
+
+msgid "Will be removed"
+msgstr "Seront retirés"
+
+msgid "I understand that these rules can remove content from search"
+msgstr "Je comprends que ces règles peuvent retirer du contenu de la recherche"
+
+msgid "Preview changes"
+msgstr "Aperçu des changements"
+
+msgid "Save rules"
+msgstr "Enregistrer les règles"
+
+msgid "Paths must start with /: @lines"
+msgstr "Les chemins doivent commencer par / : @lines"
+
+msgid "Priority sections must start with / and end with /*: @lines"
+msgstr "Les sections prioritaires doivent commencer par / et se terminer par /* : @lines"
+
+msgid "These rules remove about @count items from search. Tick the confirmation to continue."
+msgstr "Ces règles retirent environ @count éléments de la recherche. Cochez la confirmation pour continuer."
+
+msgid "The rules were saved. The search index will be updated in the background."
+msgstr "Les règles ont été enregistrées. L'index de recherche sera mis à jour en arrière-plan."
+
+msgid "Search runs inside your Drupal pages, so your theme, menus and language switcher stay in charge. Place the WahoSearch box block wherever visitors should see it."
+msgstr "La recherche s'exécute dans vos pages Drupal : votre thème, vos menus et votre sélecteur de langue restent aux commandes. Placez le bloc Boîte de recherche WahoSearch là où les visiteurs doivent le voir."
+
+msgid "Provide a search page"
+msgstr "Fournir une page de recherche"
+
+msgid "Results are shown in the language of the page: the English page shows English content only, the French page French content only."
+msgstr "Les résultats sont affichés dans la langue de la page : la page anglaise montre seulement le contenu anglais, la page française seulement le contenu français."
+
+msgid "Page address"
+msgstr "Adresse de la page"
+
+msgid "Leave empty to use @path. The language prefix, such as /fr, is added by Drupal."
+msgstr "Laissez vide pour utiliser @path. Le préfixe de langue, comme /fr, est ajouté par Drupal."
+
+msgid "Address in @language"
+msgstr "Adresse en @language"
+
+msgid "The address must start with / and contain only letters, numbers, - and /, for example /search."
+msgstr "L'adresse doit commencer par / et ne contenir que des lettres, des chiffres, - et /, par exemple /recherche."
+
+msgid "%address is already used by another page."
+msgstr "%address est déjà utilisée par une autre page."
+
+msgid "Show the chatbot on public pages"
+msgstr "Afficher le robot conversationnel sur les pages publiques"
+
+msgid "Search this site"
+msgstr "Rechercher sur ce site"
+
+msgid "Search"
+msgstr "Rechercher"
+
+msgid "Search is available in English and French only."
+msgstr "La recherche est offerte en français et en anglais seulement."
+
+msgid "Search is not available right now. Please try again later."
+msgstr "La recherche n’est pas disponible pour le moment. Veuillez réessayer plus tard."
+
+msgid "Search is busy right now. Please try again in a moment."
+msgstr "La recherche est très sollicitée en ce moment. Veuillez réessayer dans un instant."
+
+msgid "No results for “@query”."
+msgstr "Aucun résultat pour « @query »."
+
+msgid "Try fewer words, other words, or check the spelling."
+msgstr "Essayez avec moins de mots ou d’autres mots, ou vérifiez l’orthographe."
+
+msgid "Results for “@query”"
+msgstr "Résultats pour « @query »"
+
+msgid "(page @page)"
+msgstr "(page @page)"
+
+msgid "More results"
+msgstr "Plus de résultats"
+
+msgid "Previous"
+msgstr "Précédent"
+
+msgid "Attached to"
+msgstr "Joint à"
+
+msgid "Search results"
+msgstr "Résultats de recherche"
+
+msgid "How results are shown"
+msgstr "Affichage des résultats"
+
+msgid "Inside your Drupal pages (Starter, Pro and Enterprise plans)"
+msgstr "Dans vos pages Drupal (forfaits Starter, Pro et Enterprise)"
+
+msgid "Page hosted by WahoSearch, shown in a frame (all plans, including Free)"
+msgstr "Page hébergée par WahoSearch, affichée dans un cadre (tous les forfaits, y compris Free)"
+
+msgid "Results use your theme and the module templates, and logged-in visitors also find restricted content they may view."
+msgstr "Les résultats utilisent votre thème et les gabarits du module, et les visiteurs connectés trouvent aussi le contenu restreint qu'ils peuvent voir."
+
+msgid "Public content only. The platform address must be reachable by visitors, and the website address on the platform must match this site."
+msgstr "Contenu public seulement. L'adresse de la plateforme doit être accessible aux visiteurs, et l'adresse du site sur la plateforme doit correspondre à ce site."
+
+msgid "Your plan uses the page hosted by WahoSearch. Search inside your Drupal pages and custom page addresses come with the Starter, Pro and Enterprise plans."
+msgstr "Votre forfait utilise la page hébergée par WahoSearch. La recherche dans vos pages Drupal et les adresses de page personnalisées sont offertes avec les forfaits Starter, Pro et Enterprise."
+
+msgid "Only without PDF"
+msgstr "Seulement sans PDF"
+
+msgid "Send @field only when no PDF of the item is indexed"
+msgstr "Envoyer @field seulement quand aucun PDF de l'élément n'est indexé"
+
+msgid "Tick \"Only without PDF\" for a field that holds a copy of the text of the attached file: it is then sent only for items whose PDF is not indexed, such as Word or Excel files, so the same text is not indexed twice."
+msgstr "Cochez « Seulement sans PDF » pour un champ qui contient une copie du texte du fichier joint : il est alors envoyé seulement pour les éléments dont le PDF n'est pas indexé, comme les fichiers Word ou Excel, pour que le même texte ne soit pas indexé deux fois."

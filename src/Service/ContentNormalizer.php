@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\wahosearch_connector\Service;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityPublishedInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
@@ -16,6 +17,8 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\AnonymousUserSession;
 use Drupal\Core\Session\UserSession;
 use Drupal\Core\Url;
+use Drupal\file\FileInterface;
+use Drupal\media\MediaInterface;
 use Drupal\node\NodeInterface;
 use Drupal\taxonomy\TermInterface;
 
@@ -51,6 +54,8 @@ class ContentNormalizer {
     protected EntityTypeManagerInterface $entityTypeManager,
     protected EntityTypeBundleInfoInterface $bundleInfo,
     protected FileUrlGeneratorInterface $fileUrlGenerator,
+    protected SyncLog $log,
+    protected ConfigFactoryInterface $configFactory,
   ) {}
 
   /**
@@ -66,7 +71,7 @@ class ContentNormalizer {
     $documents = [];
     foreach (array_keys($node->getTranslationLanguages()) as $langcode) {
       $translation = $node->getTranslation($langcode);
-      if (!$translation->isPublished()) {
+      if (!$translation->isPublished() || !$this->selection->isPathAllowed($translation)) {
         continue;
       }
       $accounts = $this->getAllowedAccounts($translation);
@@ -77,7 +82,15 @@ class ContentNormalizer {
         continue;
       }
       $document = $this->normalize($translation, $accounts);
+      $pdfs = $this->selection->includesPdfs($node->bundle()) ? $this->buildPdfDocuments($translation, $accounts, $document) : [];
+      // Fields holding a copy of the file's text are only sent when no PDF
+      // carries that text, so it is not indexed twice.
+      $fallback = array_keys(array_filter($this->selection->getFieldMapping($node->bundle()), fn (array $map) => !empty($map['pdf_fallback'])));
+      if ($pdfs && $fallback) {
+        $document = $this->normalize($translation, $accounts, $fallback);
+      }
       $documents[$document['id']] = $document;
+      $documents += $pdfs;
     }
     return $documents;
   }
@@ -134,7 +147,7 @@ class ContentNormalizer {
    * @param \Drupal\Core\Session\AccountInterface[] $accounts
    *   Accounts allowed to view the node, keyed by role ID.
    */
-  protected function normalize(NodeInterface $node, array $accounts): array {
+  protected function normalize(NodeInterface $node, array $accounts, array $skipFields = []): array {
     $langcode = $node->language()->getId();
     $bundles = $this->bundleInfo->getBundleInfo('node');
 
@@ -149,6 +162,9 @@ class ContentNormalizer {
     $taxonomy = [];
     $definitions = $this->selection->getCandidateFields($node->bundle());
     foreach ($this->selection->getFieldMapping($node->bundle()) as $fieldName => $map) {
+      if (in_array($fieldName, $skipFields, TRUE)) {
+        continue;
+      }
       $definition = $definitions[$fieldName];
       $items = $node->get($fieldName);
       if ($items->isEmpty() || !$this->allCanView($items, $accounts)) {
@@ -160,7 +176,7 @@ class ContentNormalizer {
         }
         continue;
       }
-      $values = $this->exportValues($items, $definition, $accounts, $langcode);
+      $values = self::repairText($this->exportValues($items, $definition, $accounts, $langcode));
       if ($values) {
         $fields[$map['target']] = [
           'type' => $definition->getType(),
@@ -181,7 +197,7 @@ class ContentNormalizer {
       'langcode' => $langcode,
       'is_default_translation' => $node->isDefaultTranslation(),
       'translations' => $translations,
-      'title' => $node->getTitle(),
+      'title' => TextRepair::fix((string) $node->getTitle()),
       'url' => $this->nodeUrl($node),
       'created' => gmdate('c', (int) $node->getCreatedTime()),
       'fields' => $fields,
@@ -191,11 +207,127 @@ class ContentNormalizer {
         'roles' => array_map('strval', array_keys($accounts)),
       ],
     ];
+    $priority = $this->selection->getPrioritySection($node);
+    if ($priority) {
+      $document['priority_section'] = $priority;
+    }
     // The changed date stays out of the hash, so saving a node without
     // editing anything does not send it again.
     $document['hash'] = hash('sha256', json_encode($document, JSON_THROW_ON_ERROR));
     $document['changed'] = gmdate('c', (int) $node->getChangedTime());
     return $document;
+  }
+
+  /**
+   * Builds one document per PDF attached to a translation.
+   *
+   * The file itself is only uploaded when the platform asks for it.
+   *
+   * @return array<string, array>
+   *   Documents keyed by document ID.
+   */
+  protected function buildPdfDocuments(NodeInterface $node, array $accounts, array $parent): array {
+    $maxBytes = max(1, (int) ($this->configFactory->get('wahosearch_connector.settings')->get('pdf_max_mb') ?: 25)) * 1048576;
+    $documents = [];
+    foreach ($node->getFieldDefinitions() as $name => $definition) {
+      $isFile = $definition->getType() === 'file';
+      $isMedia = $definition->getType() === 'entity_reference' && $definition->getFieldStorageDefinition()->getSetting('target_type') === 'media';
+      if (!$isFile && !$isMedia) {
+        continue;
+      }
+      $items = $node->get($name);
+      if ($items->isEmpty() || !$this->allCanView($items, $accounts)) {
+        continue;
+      }
+      foreach ($items as $item) {
+        [$file, $title] = $isFile
+          ? [$item->entity, (string) $item->description]
+          : $this->resolveMediaFile($item->entity, $node->language()->getId(), $accounts);
+        if (!$file instanceof FileInterface || $file->getMimeType() !== 'application/pdf') {
+          continue;
+        }
+        $id = $parent['id'] . ':file:' . $file->id();
+        if ((int) $file->getSize() > $maxBytes) {
+          $this->log->warning('pdf', sprintf('Skipped %s, it is larger than the size limit.', $file->getFilename()), $id);
+          continue;
+        }
+        $sha256 = is_readable($file->getFileUri()) ? hash_file('sha256', $file->getFileUri()) : FALSE;
+        if ($sha256 === FALSE) {
+          $this->log->warning('pdf', sprintf('Skipped %s, the file could not be read.', $file->getFilename()), $id);
+          continue;
+        }
+        $document = [
+          'id' => $id,
+          'document_type' => 'pdf',
+          'entity_type' => 'node',
+          'entity_id' => $parent['entity_id'],
+          'uuid' => $file->uuid(),
+          'bundle' => $parent['bundle'],
+          'bundle_label' => $parent['bundle_label'],
+          'langcode' => $parent['langcode'],
+          'title' => $title !== '' ? $title : pathinfo($file->getFilename(), PATHINFO_FILENAME),
+          'url' => $this->fileUrlGenerator->generateAbsoluteString($file->getFileUri()),
+          'created' => gmdate('c', (int) $file->getCreatedTime()),
+          'parent' => ['id' => $parent['id'], 'title' => $parent['title'], 'url' => $parent['url']],
+          'file' => [
+            'fid' => (int) $file->id(),
+            'filename' => $file->getFilename(),
+            'mime' => $file->getMimeType(),
+            'size' => (int) $file->getSize(),
+            'sha256' => $sha256,
+          ],
+          'taxonomy' => $parent['taxonomy'],
+          'access' => $parent['access'],
+        ];
+        if (isset($parent['priority_section'])) {
+          $document['priority_section'] = $parent['priority_section'];
+        }
+        $document['hash'] = hash('sha256', json_encode($document, JSON_THROW_ON_ERROR));
+        $document['changed'] = gmdate('c', (int) $file->getChangedTime());
+        $documents[$id] = $document;
+      }
+    }
+    return $documents;
+  }
+
+  /**
+   * Repairs broken accents in every text of exported values.
+   */
+  protected static function repairText(mixed $value): mixed {
+    if (is_string($value)) {
+      return TextRepair::fix($value);
+    }
+    if (is_array($value)) {
+      return array_map([self::class, 'repairText'], $value);
+    }
+    return $value;
+  }
+
+  /**
+   * Finds the file of a media item the allowed accounts may view.
+   *
+   * @return array
+   *   The file or NULL, and the title to use.
+   */
+  protected function resolveMediaFile(mixed $media, string $langcode, array $accounts): array {
+    if (!$media instanceof MediaInterface) {
+      return [NULL, ''];
+    }
+    $media = $media->hasTranslation($langcode) ? $media->getTranslation($langcode) : $media;
+    // What anonymous visitors can open is public, so it is enough that they
+    // can view it. Some sites give "View media" to anonymous visitors but not
+    // to logged-in users, which would otherwise hide every file.
+    $checked = isset($accounts[AccountInterface::ANONYMOUS_ROLE]) ? [$accounts[AccountInterface::ANONYMOUS_ROLE]] : $accounts;
+    foreach ($checked as $account) {
+      if (!$media->access('view', $account)) {
+        return [NULL, ''];
+      }
+    }
+    $sourceField = $media->getSource()->getConfiguration()['source_field'] ?? '';
+    if ($sourceField === '' || !$media->hasField($sourceField)) {
+      return [NULL, ''];
+    }
+    return [$media->get($sourceField)->entity, (string) $media->label()];
   }
 
   /**

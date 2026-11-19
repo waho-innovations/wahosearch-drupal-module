@@ -1,0 +1,140 @@
+/**
+ * WahoSearch search page.
+ *
+ * Kept light so the site theme stays in charge of fonts and colours. Override
+ * the custom properties in your theme to change the accent colours.
+ */
+/* The box block can also stand alone, outside the search page. */
+.wahosearch-search,
+.wahosearch-box {
+  --wahosearch-accent: #1d4ed8;
+  --wahosearch-muted: #5b6472;
+  --wahosearch-border: #d8dde5;
+  --wahosearch-badge-bg: #eef2ff;
+  --wahosearch-error: #b42318;
+}
+
+.wahosearch-search {
+  max-width: 48rem;
+  margin-inline: auto;
+  padding: 1.5rem 1rem;
+}
+
+.wahosearch-box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-block-end: 1.5rem;
+}
+
+.wahosearch-box label {
+  flex-basis: 100%;
+  font-weight: 600;
+}
+
+.wahosearch-box input[type="search"] {
+  flex: 1 1 16rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--wahosearch-border, #d8dde5);
+  border-radius: 0.375rem;
+  font: inherit;
+}
+
+.wahosearch-box button {
+  min-height: 2.75rem;
+  padding: 0.5rem 1.25rem;
+  border: 1px solid var(--wahosearch-accent);
+  border-radius: 0.375rem;
+  background: var(--wahosearch-accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wahosearch-box button:hover,
+.wahosearch-box button:focus-visible {
+  filter: brightness(0.9);
+}
+
+.wahosearch-box input[type="search"]:focus-visible,
+.wahosearch-box button:focus-visible,
+.wahosearch-result a:focus-visible,
+.wahosearch-search__pager a:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.wahosearch-search__heading {
+  font-size: 1.125rem;
+  margin: 0 0 1rem;
+}
+
+.wahosearch-search__page,
+.wahosearch-search__hint,
+.wahosearch-result__section,
+.wahosearch-result__meta {
+  color: var(--wahosearch-muted);
+}
+
+.wahosearch-search__message--error {
+  color: var(--wahosearch-error);
+}
+
+.wahosearch-search__results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wahosearch-search__item {
+  padding-block: 1rem;
+  border-block-end: 1px solid var(--wahosearch-border);
+}
+
+.wahosearch-result__title {
+  font-size: 1.0625rem;
+  margin: 0 0 0.25rem;
+}
+
+.wahosearch-result__title a {
+  color: var(--wahosearch-accent);
+}
+
+.wahosearch-result__badge {
+  display: inline-block;
+  margin-inline-start: 0.375rem;
+  padding: 0 0.375rem;
+  border-radius: 0.25rem;
+  background: var(--wahosearch-badge-bg);
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.wahosearch-result__section,
+.wahosearch-result__meta {
+  font-size: 0.875rem;
+  margin: 0 0 0.25rem;
+}
+
+.wahosearch-result__snippet {
+  margin: 0 0 0.25rem;
+}
+
+.wahosearch-result__type + .wahosearch-result__parent::before {
+  content: " · ";
+}
+
+.wahosearch-search__pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-block-start: 1.5rem;
+}
+
+.wahosearch-search__pager a[rel="next"] {
+  margin-inline-start: auto;
+}

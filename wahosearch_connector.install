@@ -75,8 +75,44 @@ function wahosearch_connector_uninstall(): void {
   \Drupal::state()->deleteMultiple([
     ApiClient::SECRET_STATE_KEY,
     SyncManager::STATE_LAST_FULL_SYNC,
+    SyncManager::STATE_LAST_SUCCESS,
+    SyncManager::STATE_LAST_RECONCILE,
+    SyncManager::STATE_RECONCILE_REQUESTED,
+    SyncManager::STATE_CONNECTION,
   ]);
   \Drupal::queue(SyncManager::QUEUE, TRUE)->deleteQueue();
+}
+
+/**
+ * Adds the settings for PDFs, indexing rules and search display.
+ */
+function wahosearch_connector_update_10101(): void {
+  $config = \Drupal::configFactory()->getEditable('wahosearch_connector.settings');
+  $defaults = [
+    'reconcile_days' => 7,
+    'pdf_max_mb' => 25,
+    'include_paths' => '',
+    'exclude_paths' => '',
+    'priority_sections' => '',
+    'search_page' => FALSE,
+    'chatbot' => FALSE,
+  ];
+  foreach ($defaults as $key => $value) {
+    if ($config->get($key) === NULL) {
+      $config->set($key, $value);
+    }
+  }
+  $config->save();
+}
+
+/**
+ * Adds the choice between the search page in Drupal and the hosted page.
+ */
+function wahosearch_connector_update_10102(): void {
+  $config = \Drupal::configFactory()->getEditable('wahosearch_connector.settings');
+  if ($config->get('search_mode') === NULL) {
+    $config->set('search_mode', 'drupal')->save();
+  }
 }
 
 /**
