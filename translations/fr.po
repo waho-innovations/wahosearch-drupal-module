@@ -567,3 +567,77 @@ msgstr "Envoyer @field seulement quand aucun PDF de l'élément n'est indexé"
 
 msgid "Tick \"Only without PDF\" for a field that holds a copy of the text of the attached file: it is then sent only for items whose PDF is not indexed, such as Word or Excel files, so the same text is not indexed twice."
 msgstr "Cochez « Seulement sans PDF » pour un champ qui contient une copie du texte du fichier joint : il est alors envoyé seulement pour les éléments dont le PDF n'est pas indexé, comme les fichiers Word ou Excel, pour que le même texte ne soit pas indexé deux fois."
+
+msgid "Let visitors filter and sort the results"
+msgstr "Permettre aux visiteurs de filtrer et de trier les résultats"
+
+msgid "By type (pages or files), content type and topic, with the values found in your own content, and by best match, newest or title. Visitors can also choose to search the exact words."
+msgstr "Par type (pages ou fichiers), type de contenu et sujet, avec les valeurs trouvées dans votre propre contenu, et par pertinence, date ou titre. Les visiteurs peuvent aussi choisir de chercher les mots exacts."
+
+msgid "Suggest searches while visitors type"
+msgstr "Suggérer des recherches pendant la saisie"
+
+msgid "Earlier searches on this site that found something, and titles of pages the visitor may see."
+msgstr "Des recherches déjà faites sur ce site qui ont donné des résultats, et des titres de pages que le visiteur peut voir."
+
+msgid "Smart search is used up for this month. These results come from a simple word search."
+msgstr "La recherche intelligente est épuisée pour ce mois-ci. Ces résultats viennent d’une recherche simple par mots."
+
+msgid "Smart search is not available right now. These results come from a simple word search."
+msgstr "La recherche intelligente n’est pas disponible pour le moment. Ces résultats viennent d’une recherche simple par mots."
+
+msgid "Pages"
+msgstr "Pages"
+
+msgid "Files"
+msgstr "Fichiers"
+
+msgid "@label (@count)"
+msgstr "@label (@count)"
+
+msgid "Refine results"
+msgstr "Affiner les résultats"
+
+msgid "Search type"
+msgstr "Type de recherche"
+
+msgid "Smart search"
+msgstr "Recherche intelligente"
+
+msgid "Exact words"
+msgstr "Mots exacts"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Topic"
+msgstr "Sujet"
+
+msgid "Sort by"
+msgstr "Trier par"
+
+msgid "Best match"
+msgstr "Pertinence"
+
+msgid "Newest first"
+msgstr "Plus récents d’abord"
+
+msgid "Title (A to Z)"
+msgstr "Titre (A à Z)"
+
+msgid "Apply"
+msgstr "Appliquer"
+
+msgid "Clear filters"
+msgstr "Effacer les filtres"
+
+msgid "Suggestions"
+msgstr "Suggestions"
+
+msgid "(opens the page)"
+msgstr "(ouvre la page)"
+
+msgid "1 suggestion available."
+msgid_plural "@count suggestions available."
+msgstr[0] "1 suggestion disponible."
+msgstr[1] "@count suggestions disponibles."

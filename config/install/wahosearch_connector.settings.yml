@@ -12,5 +12,7 @@ exclude_paths: ''
 priority_sections: ''
 search_page: false
 search_mode: drupal
+search_filters: true
+search_suggestions: true
 chatbot: false
 bundles: {}

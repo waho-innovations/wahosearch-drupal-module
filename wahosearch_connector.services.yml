@@ -21,7 +21,7 @@ services:
 
   wahosearch_connector.site_search:
     class: Drupal\wahosearch_connector\Service\SiteSearch
-    arguments: ['@wahosearch_connector.api_client', '@language_manager', '@current_user', '@logger.channel.wahosearch_connector']
+    arguments: ['@wahosearch_connector.api_client', '@language_manager', '@current_user', '@logger.channel.wahosearch_connector', '@cache.default', '@transliteration']
 
   wahosearch_connector.sync_log:
     class: Drupal\wahosearch_connector\Service\SyncLog

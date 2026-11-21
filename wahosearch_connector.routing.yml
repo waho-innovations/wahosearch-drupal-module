@@ -47,6 +47,13 @@ wahosearch_connector.search_page:
   requirements:
     _permission: 'access content'
 
+wahosearch_connector.suggest:
+  path: '/wahosearch/suggest'
+  defaults:
+    _controller: '\Drupal\wahosearch_connector\Controller\SearchPageController::suggest'
+  requirements:
+    _permission: 'access content'
+
 wahosearch_connector.sync:
   path: '/admin/config/search/wahosearch-connector/sync'
   defaults:

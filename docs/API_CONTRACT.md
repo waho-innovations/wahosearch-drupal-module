@@ -151,12 +151,25 @@ seconds.
 - `roles` are the visitor's roles, empty for anonymous visitors. Only public
   content and content allowed for one of these roles may be returned.
 - `page` is 1 to 20.
+- Optional, sent only when the visitor chose them: `type` (`page` or `file`),
+  `content_type` (a value from `facets`), `tag` (a value from `facets`), `sort`
+  (`newest` or `title`; best match when missing) and `mode` (`basic` to search
+  the exact words; smart search when missing).
+- `facets: true` on the first page, when the module has no values to filter by
+  for this language and these roles from the last 10 minutes.
 
 Response:
 
 ```json
 {
   "has_more": true,
+  "mode": "basic",
+  "notice": {"code": "ai_limit_reached", "message": "..."},
+  "facets": {
+    "types": {"page": 190, "file": 137},
+    "content_types": [{"value": "guideline", "label": "Guideline", "count": 42}],
+    "tags": [{"value": "Mice", "count": 12}]
+  },
   "results": [
     {"id": "node:412:fr:file:977", "type": "file", "title": "...", "url": "https://...",
      "snippet": "...", "heading": ["..."], "content_type": "Document", "tags": [],
@@ -164,6 +177,13 @@ Response:
   ]
 }
 ```
+
+- `mode` says how the results were found: `ai` or `basic`. `notice` is set when
+  the exact words were searched although the visitor did not ask for it
+  (`ai_limit_reached` or `ai_unavailable`); the module shows `message` above
+  the results.
+- `facets` comes with the first page when asked for: the values found in the
+  site's content that the visitor may see, in the page language.
 
 Errors are `{"code": "...", "message": "..."}` with `message` in the language
 of the request. `403 hosted_page_only` means the plan (Free) only allows the
@@ -174,6 +194,23 @@ frame instead.
 `hosted`), which the module keeps to choose the page. The module shows `message` to visitors for `rate_limited`,
 `search_limit_reached`, `search_busy` and `empty_query`, and a general message
 for anything else.
+
+### `POST search/suggest`
+
+Sent when a visitor types in the search box (at least 2 characters), through
+the module's `/wahosearch/suggest` address. Times out after 3 seconds; a
+failure shows no suggestions.
+
+```json
+{"query": "sour", "langcode": "fr", "roles": []}
+```
+
+Response: up to 6 suggestions, earlier searches that found something first,
+then page titles the visitor may see (with the page address):
+
+```json
+{"suggestions": [{"text": "souris blanches", "url": null}, {"text": "FAQ du CCPA sur les souris", "url": "https://www.example.ca/files/faq.pdf"}]}
+```
 
 ## Chatbot
 

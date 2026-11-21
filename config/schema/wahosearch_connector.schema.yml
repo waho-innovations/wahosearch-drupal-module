@@ -44,6 +44,12 @@ wahosearch_connector.settings:
     search_mode:
       type: string
       label: 'How results are shown: drupal or hosted'
+    search_filters:
+      type: boolean
+      label: 'Let visitors filter and sort the results'
+    search_suggestions:
+      type: boolean
+      label: 'Suggest searches while visitors type'
     chatbot:
       type: boolean
       label: 'Show the chatbot on public pages'

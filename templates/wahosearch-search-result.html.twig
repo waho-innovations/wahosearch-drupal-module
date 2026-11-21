@@ -10,7 +10,9 @@
  * - result.type: "page" or "file".
  * - result.title: the page or file title.
  * - result.url: the link to open.
- * - result.snippet: the passage that best matches the question.
+ * - result.snippet: the passage that best matches the question, as text.
+ * - result.snippet_html: the same passage, escaped, with the words that match
+ *   the question in <mark>.
  * - result.heading: the headings above that passage, outermost first.
  * - result.content_type: the content type label, such as "News".
  * - result.tags: tag names.
@@ -29,7 +31,7 @@
     <p class="wahosearch-result__section">{{ result.heading|join(' › ') }}</p>
   {% endif %}
   {% if result.snippet %}
-    <p class="wahosearch-result__snippet">{{ result.snippet }}</p>
+    <p class="wahosearch-result__snippet">{{ result.snippet_html ?: result.snippet }}</p>
   {% endif %}
   {% if result.parent or result.content_type %}
     <p class="wahosearch-result__meta">

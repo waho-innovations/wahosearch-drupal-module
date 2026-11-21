@@ -108,11 +108,125 @@ class SearchPageTest extends BrowserTestBase {
     $session->fieldValueEquals('q', 'mice housing');
     $session->linkExists('More results');
     $session->linkNotExists('Previous');
-    $this->assertSame([['query' => 'mice housing', 'langcode' => 'en', 'roles' => [], 'page' => 1]], $this->requests());
+    $this->assertSame([['query' => 'mice housing', 'langcode' => 'en', 'roles' => [], 'page' => 1, 'facets' => TRUE]], $this->requests());
+    $session->responseContains('<mark>Mice</mark> should be housed &lt;script&gt;');
+    $session->responseContains('New <mark>housing</mark> rules.');
 
     $this->clickLink('More results');
     $session->linkExists('Previous');
     $this->assertSame(2, $this->requests()[1]['page']);
+  }
+
+  /**
+   * Visitors filter and sort with the values of the site's own content.
+   */
+  public function testFiltersAndSort(): void {
+    $this->answer([
+      'has_more' => TRUE,
+      'mode' => 'ai',
+      'results' => [['id' => 'node:5:en', 'type' => 'page', 'title' => 'Housing news', 'url' => 'https://www.example.ca/news/housing']],
+      'facets' => [
+        'types' => ['page' => 190, 'file' => 137],
+        'content_types' => [['value' => 'guideline', 'label' => 'Guideline', 'count' => 42]],
+        'tags' => [['value' => 'Mice', 'count' => 12], ['value' => '2024', 'count' => 3]],
+      ],
+    ]);
+
+    $this->drupalGet('/search', ['query' => ['q' => 'mice']]);
+    $session = $this->assertSession();
+    $session->optionExists('type', 'Files (137)');
+    $session->optionExists('content_type', 'Guideline (42)');
+    $session->optionExists('tag', 'Mice (12)');
+    $session->optionExists('tag', '2024 (3)');
+    $session->linkNotExists('Clear filters');
+
+    $this->submitForm(['type' => 'file', 'content_type' => 'guideline', 'tag' => '2024', 'sort' => 'newest', 'mode' => 'basic'], 'Apply');
+    $this->assertSame(
+      ['query' => 'mice', 'langcode' => 'en', 'roles' => [], 'page' => 1, 'type' => 'file', 'content_type' => 'guideline', 'tag' => '2024', 'sort' => 'newest', 'mode' => 'basic'],
+      $this->requests()[1],
+      'The values to filter by are not asked for again.',
+    );
+    $session->fieldValueEquals('type', 'file');
+    $session->fieldValueEquals('tag', '2024');
+    $session->fieldValueEquals('sort', 'newest');
+    $session->fieldValueEquals('mode', 'basic');
+
+    // The next page keeps the choices.
+    $this->clickLink('More results');
+    $request = $this->requests()[2];
+    $this->assertSame([2, 'file', '2024', 'newest', 'basic'], [$request['page'], $request['type'], $request['tag'], $request['sort'], $request['mode']]);
+    $session->optionExists('content_type', 'Guideline (42)');
+
+    $this->clickLink('Clear filters');
+    $this->assertSame(['query' => 'mice', 'langcode' => 'en', 'roles' => [], 'page' => 1], $this->requests()[3]);
+
+    // Values that do not exist are ignored.
+    $this->drupalGet('/search', ['query' => ['q' => 'mice', 'type' => 'video', 'sort' => 'random', 'mode' => 'x']]);
+    $this->assertSame(['query' => 'mice', 'langcode' => 'en', 'roles' => [], 'page' => 1], $this->requests()[4]);
+
+    // Turned off: no bar, and the address cannot filter.
+    $this->config('wahosearch_connector.settings')->set('search_filters', FALSE)->save();
+    $this->drupalGet('/search', ['query' => ['q' => 'mice', 'type' => 'file']]);
+    $session->fieldNotExists('sort');
+    $this->assertArrayNotHasKey('type', $this->requests()[5]);
+  }
+
+  /**
+   * Results from the exact words come with the reason.
+   */
+  public function testNotice(): void {
+    $this->answer([
+      'mode' => 'basic',
+      'notice' => ['code' => 'ai_limit_reached', 'message' => 'Smart search is used up for this month. These results come from a simple word search.'],
+      'results' => [['id' => 'node:5:en', 'type' => 'page', 'title' => 'Housing news', 'url' => 'https://www.example.ca/news/housing']],
+    ]);
+
+    $this->drupalGet('/search', ['query' => ['q' => 'mice']]);
+
+    $this->assertSession()->elementTextEquals('css', '.wahosearch-search__notice', 'Smart search is used up for this month. These results come from a simple word search.');
+    $this->assertSession()->linkExists('Housing news');
+  }
+
+  /**
+   * Suggestions come from this server, for the visitor's language and roles.
+   */
+  public function testSuggestions(): void {
+    \Drupal::state()->set('wahosearch_connector_test.suggestions', [
+      ['text' => 'mice housing', 'url' => NULL],
+      ['text' => 'Mice guidelines', 'url' => 'https://www.example.ca/files/mice.pdf'],
+      ['text' => 'Bad', 'url' => 'javascript:alert(1)'],
+    ]);
+
+    $this->drupalGet('/search');
+    $form = $this->assertSession()->elementExists('css', 'form[data-wahosearch-suggest]');
+    $this->assertStringEndsWith('/wahosearch/suggest', $form->getAttribute('data-wahosearch-suggest'));
+    $this->assertSession()->responseContains('search-suggest.js');
+
+    $json = $this->drupalGet('/fr/wahosearch/suggest', ['query' => ['q' => 'sou']]);
+    $this->assertSession()->statusCodeEquals(200);
+    $this->assertSame([
+      'suggestions' => [
+        ['text' => 'mice housing', 'url' => NULL],
+        ['text' => 'Mice guidelines', 'url' => 'https://www.example.ca/files/mice.pdf'],
+        ['text' => 'Bad', 'url' => NULL],
+      ],
+    ], json_decode($json, TRUE));
+    $this->assertSession()->responseNotContains(self::SECRET);
+
+    \Drupal::state()->resetCache();
+    $sent = \Drupal::state()->get('wahosearch_connector_test.suggest_requests', []);
+    $this->assertSame([['query' => 'sou', 'langcode' => 'fr', 'roles' => []]], $sent);
+
+    // Too short: nothing is asked.
+    $this->drupalGet('/wahosearch/suggest', ['query' => ['q' => 'm']]);
+    $this->assertSame('{"suggestions":[]}', $this->getSession()->getPage()->getContent());
+
+    // Turned off: no route, no script.
+    $this->config('wahosearch_connector.settings')->set('search_suggestions', FALSE)->save();
+    $this->drupalGet('/wahosearch/suggest', ['query' => ['q' => 'mice']]);
+    $this->assertSession()->statusCodeEquals(404);
+    $this->drupalGet('/search');
+    $this->assertSession()->elementNotExists('css', 'form[data-wahosearch-suggest]');
   }
 
   /**

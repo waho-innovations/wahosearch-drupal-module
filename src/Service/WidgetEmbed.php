@@ -44,6 +44,20 @@ class WidgetEmbed {
   }
 
   /**
+   * Whether visitors can filter and sort the results on the Drupal page.
+   */
+  public function isFiltersEnabled(): bool {
+    return $this->configFactory->get('wahosearch_connector.settings')->get('search_filters') ?? TRUE;
+  }
+
+  /**
+   * Whether the search box suggests searches while visitors type.
+   */
+  public function isSuggestionsEnabled(): bool {
+    return $this->isSearchPageEnabled() && ($this->configFactory->get('wahosearch_connector.settings')->get('search_suggestions') ?? TRUE);
+  }
+
+  /**
    * Whether results come from the page hosted by the platform, in a frame.
    */
   public function isHostedMode(): bool {
@@ -121,8 +135,9 @@ class WidgetEmbed {
    * Builds the search box shown by the block.
    */
   public function searchBox(): array {
-    return $this->searchForm('') + [
-      '#attached' => ['library' => ['wahosearch_connector/search_page']],
+    $build = $this->searchForm('');
+    $build['#attached']['library'][] = 'wahosearch_connector/search_page';
+    return $build + [
       '#cache' => [
         'contexts' => ['languages:language_interface'],
         'tags' => ['config:wahosearch_connector.settings'],
@@ -134,17 +149,25 @@ class WidgetEmbed {
    * Builds a plain search form, which also works without JavaScript.
    */
   public function searchForm(string $query): array {
-    return [
+    $suggest = $this->isSuggestionsEnabled();
+    $build = [
       '#type' => 'inline_template',
-      '#template' => '<form role="search" method="get" action="{{ action }}" class="wahosearch-box" data-wahosearch-widget="box"><label for="{{ id }}">{{ label }}</label> <input type="search" id="{{ id }}" name="q" value="{{ query }}" maxlength="200" autocomplete="off"> <button type="submit">{{ button }}</button></form>',
+      '#template' => '<form role="search" method="get" action="{{ action }}" class="wahosearch-box" data-wahosearch-widget="box"{% if suggest_url %} data-wahosearch-suggest="{{ suggest_url }}"{% endif %}><label for="{{ id }}">{{ label }}</label> <div class="wahosearch-box__field"><input type="search" id="{{ id }}" name="q" value="{{ query }}" maxlength="200" autocomplete="off"></div> <button type="submit">{{ button }}</button></form>',
       '#context' => [
         'action' => Url::fromRoute('wahosearch_connector.search_page')->toString(),
         'id' => Html::getUniqueId('wahosearch-query'),
         'label' => $this->t('Search this site'),
         'query' => $query,
         'button' => $this->t('Search'),
+        // The address has the language prefix, so suggestions come in the
+        // language of the page.
+        'suggest_url' => $suggest ? Url::fromRoute('wahosearch_connector.suggest')->toString() : NULL,
       ],
     ];
+    if ($suggest) {
+      $build['#attached']['library'][] = 'wahosearch_connector/search_suggest';
+    }
+    return $build;
   }
 
   /**

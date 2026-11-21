@@ -127,6 +127,13 @@ On the Search display tab:
   platform when the connection is tested, and again once a day on cron; if the
   platform refuses a search because of the plan, the hosted page is shown
   straight away.
+- Let visitors filter and sort the results (on by default, search inside
+  Drupal only): a bar above the results to choose smart search or the exact
+  words, pages or files, a content type or a topic, and the order (best match,
+  newest first, title).
+- Suggest searches while visitors type (on by default): a list under the box
+  with earlier searches on this site that found something, and titles of pages
+  the visitor may see.
 - Show the chatbot on public pages.
 
 The WahoSearch box block sends visitors to the search page and can go in any
@@ -148,15 +155,33 @@ How the search page works:
 - Search pages are never cached, so every search is counted and filtered for
   the visitor.
 - Languages other than English and French show a message instead of results.
+- When smart search cannot answer (the plan's monthly smart searches are used
+  up, or the AI service is busy or down), the platform searches the exact words
+  instead, and the page says so above the results. Search never stops.
+- Words of the question are marked in the passage under each title, ignoring
+  capitals and accents ("etude" marks "Études").
+- Filters: the content types and topics offered are the ones in your own
+  content that the visitor may see, with counts, sent by the platform with the
+  first page of results and kept 10 minutes. Nothing changes until the visitor
+  presses Apply, so the bar works without JavaScript. The next pages keep the
+  choices.
+- Suggestions are asked for by this server too (`/wahosearch/suggest`, signed,
+  in the language of the page, with the visitor's roles), at most 60 per minute
+  per visitor, and reused for 5 minutes. The list follows the ARIA combobox
+  pattern: arrow keys, Enter and Escape work, and screen readers announce how
+  many suggestions there are. A search suggestion searches; a page title opens
+  the page.
 
 ### Changing how results look
 
-The page uses two Twig templates from the module's `templates` folder:
+The page uses three Twig templates from the module's `templates` folder:
 
 - `wahosearch-search-page.html.twig`: the box, the messages, the result list
   and the links to more results.
+- `wahosearch-search-filters.html.twig`: the filter and sort bar.
 - `wahosearch-search-result.html.twig`: one result (title, file type, section,
-  passage, content type, and for files the page they are attached to).
+  passage with the matching words marked, content type, and for files the page
+  they are attached to).
 
 To change them, copy either file into your theme's `templates` folder, edit the
 copy and clear the cache. Each template lists the variables it receives. The

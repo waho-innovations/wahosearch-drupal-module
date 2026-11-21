@@ -116,6 +116,19 @@ function wahosearch_connector_update_10102(): void {
 }
 
 /**
+ * Adds filters, sorting and suggestions to the search page, turned on.
+ */
+function wahosearch_connector_update_10103(): void {
+  $config = \Drupal::configFactory()->getEditable('wahosearch_connector.settings');
+  foreach (['search_filters', 'search_suggestions'] as $key) {
+    if ($config->get($key) === NULL) {
+      $config->set($key, TRUE);
+    }
+  }
+  $config->save();
+}
+
+/**
  * Implements hook_requirements().
  */
 #[LegacyRequirementsHook]

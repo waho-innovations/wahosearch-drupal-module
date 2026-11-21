@@ -13,6 +13,10 @@
  *   result.
  * - results: the results, each rendered with wahosearch-search-result.html.twig.
  * - error: a message for the visitor when the search failed, or empty.
+ * - notice: when smart search could not answer and the results come from a
+ *   search of the exact words, the reason, ready to show. Otherwise empty.
+ * - filters: the filter and sort bar, rendered with
+ *   wahosearch-search-filters.html.twig, or empty when turned off.
  * - page: the page number, starting at 1.
  * - previous_url, next_url: links to the other pages, or empty.
  */
@@ -20,13 +24,21 @@
 <div class="wahosearch-search" lang="{{ langcode }}">
   {{ form }}
 
+  {{ filters }}
+
   <div class="wahosearch-search__status" role="status" aria-live="polite">
     {% if error %}
       <p class="wahosearch-search__message wahosearch-search__message--error">{{ error }}</p>
     {% elseif query and results is empty %}
+      {% if notice %}
+        <p class="wahosearch-search__notice">{{ notice }}</p>
+      {% endif %}
       <p class="wahosearch-search__message"><strong>{{ 'No results for “@query”.'|t({'@query': query}) }}</strong></p>
       <p class="wahosearch-search__hint">{{ 'Try fewer words, other words, or check the spelling.'|t }}</p>
     {% elseif query %}
+      {% if notice %}
+        <p class="wahosearch-search__notice">{{ notice }}</p>
+      {% endif %}
       <h2 class="wahosearch-search__heading">{{ 'Results for “@query”'|t({'@query': query}) }}{% if page > 1 %} <span class="wahosearch-search__page">{{ '(page @page)'|t({'@page': page}) }}</span>{% endif %}</h2>
     {% endif %}
   </div>

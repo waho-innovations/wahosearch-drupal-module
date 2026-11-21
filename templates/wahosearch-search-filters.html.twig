@@ -1,0 +1,66 @@
+{#
+/**
+ * @file
+ * The filter and sort bar of the WahoSearch search page.
+ *
+ * A plain form: it works without JavaScript, and nothing changes until the
+ * visitor presses Apply.
+ *
+ * To change it, copy this file into your theme's templates folder and edit the
+ * copy. Clear the cache afterwards.
+ *
+ * Available variables:
+ * - action: the search page address.
+ * - query: the question, kept when the filters change.
+ * - values: the current choices: mode ("ai" or "basic"), type ("page", "file"
+ *   or empty), content_type, tag (or empty) and sort ("relevance", "newest" or
+ *   "title").
+ * - facets: the choices offered, from the site's own content: types,
+ *   content_types and tags, each a list of options with value, text (with
+ *   the number of items when known) and selected. Empty lists are hidden.
+ * - clear_url: the same search without filters, or empty when none is set.
+ */
+#}
+<form method="get" action="{{ action }}" class="wahosearch-filters" aria-label="{{ 'Refine results'|t }}">
+  <input type="hidden" name="q" value="{{ query }}">
+
+  <div class="wahosearch-filters__field">
+    <label for="wahosearch-filter-mode">{{ 'Search type'|t }}</label>
+    <select id="wahosearch-filter-mode" name="mode">
+      <option value="ai"{{ values.mode == 'ai' ? ' selected' }}>{{ 'Smart search'|t }}</option>
+      <option value="basic"{{ values.mode == 'basic' ? ' selected' }}>{{ 'Exact words'|t }}</option>
+    </select>
+  </div>
+
+  {% for name, options in {'type': facets.types, 'content_type': facets.content_types, 'tag': facets.tags} %}
+    {% if options is not empty %}
+      <div class="wahosearch-filters__field">
+        <label for="wahosearch-filter-{{ name|clean_class }}">
+          {%- if name == 'type' %}{{ 'Type'|t }}{% elseif name == 'content_type' %}{{ 'Content type'|t }}{% else %}{{ 'Topic'|t }}{% endif -%}
+        </label>
+        <select id="wahosearch-filter-{{ name|clean_class }}" name="{{ name }}">
+          <option value="">{{ 'All'|t }}</option>
+          {% for option in options %}
+            <option value="{{ option.value }}"{{ option.selected ? ' selected' }}>{{ option.text }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    {% endif %}
+  {% endfor %}
+
+  <div class="wahosearch-filters__field">
+    <label for="wahosearch-filter-sort">{{ 'Sort by'|t }}</label>
+    <select id="wahosearch-filter-sort" name="sort">
+      <option value="relevance"{{ values.sort == 'relevance' ? ' selected' }}>{{ 'Best match'|t }}</option>
+      <option value="newest"{{ values.sort == 'newest' ? ' selected' }}>{{ 'Newest first'|t }}</option>
+      <option value="title"{{ values.sort == 'title' ? ' selected' }}>{{ 'Title (A to Z)'|t }}</option>
+    </select>
+  </div>
+
+  <div class="wahosearch-filters__actions">
+    <button type="submit">{{ 'Apply'|t }}</button>
+    {% if clear_url %}
+      <a href="{{ clear_url }}">{{ 'Clear filters'|t }}</a>
+    {% endif %}
+  </div>
+</form>

@@ -49,6 +49,11 @@ class ApiClient {
    */
   protected const SEARCH_TIMEOUT = 10;
 
+  /**
+   * Seconds to wait for suggestions; late ones are no use while typing.
+   */
+  protected const SUGGEST_TIMEOUT = 3;
+
   public function __construct(
     protected ClientInterface $httpClient,
     protected ConfigFactoryInterface $configFactory,
@@ -178,13 +183,25 @@ class ApiClient {
    * Searches the website's indexed content.
    *
    * @param array $request
-   *   The search request: query, langcode, roles, page, as described in
-   *   docs/API_CONTRACT.md.
+   *   The search request: query, langcode, roles, page, and optionally the
+   *   filters, sort, mode and facets, as described in docs/API_CONTRACT.md.
    *
    * @throws \Drupal\wahosearch_connector\Exception\ApiException
    */
   public function search(array $request): array {
     return $this->request('POST', 'search', $request, self::SEARCH_TIMEOUT);
+  }
+
+  /**
+   * Returns suggestions for the words a visitor has typed so far.
+   *
+   * @param array $request
+   *   The words typed (query), langcode and roles.
+   *
+   * @throws \Drupal\wahosearch_connector\Exception\ApiException
+   */
+  public function suggest(array $request): array {
+    return $this->request('POST', 'search/suggest', $request, self::SUGGEST_TIMEOUT);
   }
 
   /**

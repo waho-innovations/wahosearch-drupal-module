@@ -151,9 +151,20 @@ function wahosearch_connector_theme(): array {
         'langcode' => 'en',
         'results' => [],
         'error' => NULL,
+        'notice' => NULL,
+        'filters' => NULL,
         'page' => 1,
         'previous_url' => NULL,
         'next_url' => NULL,
+      ],
+    ],
+    'wahosearch_search_filters' => [
+      'variables' => [
+        'action' => '',
+        'query' => '',
+        'values' => [],
+        'facets' => [],
+        'clear_url' => NULL,
       ],
     ],
     'wahosearch_search_result' => [

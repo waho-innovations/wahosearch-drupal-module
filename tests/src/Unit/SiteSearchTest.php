@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\wahosearch_connector\Unit;
 
+use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Component\Transliteration\PhpTransliteration;
+use Drupal\Core\Cache\MemoryBackend;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Language\LanguageManagerInterface;
@@ -26,23 +29,33 @@ class SiteSearchTest extends UnitTestCase {
   private array $sent = [];
 
   /**
+   * Shared cache, so a test can search twice as the same site.
+   */
+  private ?MemoryBackend $cache = NULL;
+
+  /**
    * Builds the service for a page in a language, seen by a visitor.
    */
-  private function service(string $langcode, array $roles, mixed $answer, bool $configured = TRUE): SiteSearch {
+  private function service(string $langcode, array $roles, mixed $answer, bool $configured = TRUE, bool $keepCache = FALSE): SiteSearch {
     $this->sent = [];
+    if (!$keepCache || !$this->cache) {
+      $this->cache = new MemoryBackend($this->createMock(TimeInterface::class));
+    }
     $container = new ContainerBuilder();
     $container->set('string_translation', $this->getStringTranslationStub());
     \Drupal::setContainer($container);
 
-    $api = $this->createMock(ApiClient::class);
-    $api->method('isConfigured')->willReturn($configured);
-    $api->method('search')->willReturnCallback(function (array $request) use ($answer) {
+    $reply = function (array $request) use ($answer) {
       $this->sent[] = $request;
       if ($answer instanceof \Throwable) {
         throw $answer;
       }
       return $answer;
-    });
+    };
+    $api = $this->createMock(ApiClient::class);
+    $api->method('isConfigured')->willReturn($configured);
+    $api->method('search')->willReturnCallback($reply);
+    $api->method('suggest')->willReturnCallback($reply);
 
     $languages = $this->createMock(LanguageManagerInterface::class);
     $languages->method('getCurrentLanguage')->willReturn(new Language(['id' => $langcode]));
@@ -51,7 +64,7 @@ class SiteSearchTest extends UnitTestCase {
     $user->method('isAnonymous')->willReturn($roles === []);
     $user->method('getRoles')->willReturn($roles === [] ? [AccountInterface::ANONYMOUS_ROLE] : $roles);
 
-    return new SiteSearch($api, $languages, $user, $this->createMock(LoggerChannelInterface::class));
+    return new SiteSearch($api, $languages, $user, $this->createMock(LoggerChannelInterface::class), $this->cache, new PhpTransliteration());
   }
 
   /**
@@ -122,6 +135,7 @@ class SiteSearchTest extends UnitTestCase {
     $outcome = $search->search('mice');
 
     $this->assertTrue($outcome['has_more']);
+    $this->assertTrue($this->sent[0]['facets'], 'The first page asks for the values to filter by.');
     $this->assertCount(2, $outcome['results']);
     $this->assertSame([
       'id' => 'node:4:en:file:9',
@@ -129,6 +143,7 @@ class SiteSearchTest extends UnitTestCase {
       'title' => 'Mice guidelines',
       'url' => 'https://www.example.ca/files/Mice.PDF',
       'snippet' => 'Mice should be housed in groups.',
+      'snippet_html' => '<mark>Mice</mark> should be housed in groups.',
       'heading' => ['Housing'],
       'content_type' => 'Document',
       'tags' => ['Mice'],
@@ -185,6 +200,104 @@ class SiteSearchTest extends UnitTestCase {
 
     $this->assertTrue($outcome['hosted_only']);
     $this->assertNull($outcome['error']);
+  }
+
+  /**
+   * Filters, sort and mode are sent only when they differ from the defaults.
+   */
+  public function testFiltersAreSent(): void {
+    $search = $this->service('en', [], ['results' => []]);
+
+    $search->search('mice', 1, ['type' => 'file', 'content_type' => 'guideline', 'tag' => 'Mice', 'sort' => 'newest', 'mode' => 'basic']);
+    $search->search('mice', 2, ['type' => 'video', 'content_type' => str_repeat('x', 200), 'sort' => 'relevance', 'mode' => 'ai', 'tag' => ['x']]);
+
+    $this->assertSame(['query' => 'mice', 'langcode' => 'en', 'roles' => [], 'page' => 1, 'type' => 'file', 'content_type' => 'guideline', 'tag' => 'Mice', 'sort' => 'newest', 'mode' => 'basic', 'facets' => TRUE], $this->sent[0]);
+    $this->assertSame(['query' => 'mice', 'langcode' => 'en', 'roles' => [], 'page' => 2], $this->sent[1], 'Unknown values are dropped.');
+  }
+
+  /**
+   * Keyword results come with the reason, ready to show.
+   */
+  public function testNotice(): void {
+    $outcome = $this->service('fr', [], ['results' => [], 'mode' => 'basic', 'notice' => ['code' => 'ai_limit_reached', 'message' => 'La recherche intelligente est épuisée pour ce mois.']])->search('souris');
+    $this->assertSame('basic', $outcome['mode']);
+    $this->assertSame('La recherche intelligente est épuisée pour ce mois.', $outcome['notice']);
+
+    $outcome = $this->service('en', [], ['results' => [], 'mode' => 'basic', 'notice' => ['code' => 'ai_unavailable']])->search('mice');
+    $this->assertSame('Smart search is not available right now. These results come from a simple word search.', $outcome['notice']);
+
+    $outcome = $this->service('en', [], ['results' => [], 'mode' => 'ai', 'notice' => NULL])->search('mice');
+    $this->assertSame('ai', $outcome['mode']);
+    $this->assertNull($outcome['notice']);
+  }
+
+  /**
+   * The values to filter by are kept, cleaned, and reused for the next pages.
+   */
+  public function testFacetsAreKept(): void {
+    $facets = [
+      'types' => ['page' => 190, 'file' => 137],
+      'content_types' => [['value' => 'guideline', 'label' => 'Guideline', 'count' => 42], ['value' => '', 'count' => 3], 'bad'],
+      'tags' => [['value' => 'Mice', 'count' => 12], ['value' => ['x']]],
+    ];
+    $outcome = $this->service('en', [], ['results' => [], 'facets' => $facets])->search('mice');
+    $expected = [
+      'types' => ['page' => 190, 'file' => 137],
+      'content_types' => [['value' => 'guideline', 'label' => 'Guideline', 'count' => 42]],
+      'tags' => [['value' => 'Mice', 'count' => 12]],
+    ];
+    $this->assertSame($expected, $outcome['facets']);
+
+    // Next page, and a new search: the platform is not asked again.
+    $search = $this->service('en', [], ['results' => []], TRUE, TRUE);
+    $this->assertSame($expected, $search->search('mice', 2)['facets']);
+    $this->assertSame($expected, $search->search('rats', 1)['facets']);
+    $this->assertArrayNotHasKey('facets', $this->sent[1]);
+
+    // Other visitors have their own values.
+    $search = $this->service('en', ['authenticated'], ['results' => []], TRUE, TRUE);
+    $search->search('mice');
+    $this->assertTrue($this->sent[0]['facets']);
+  }
+
+  /**
+   * Words of the question are marked, ignoring case and accents.
+   *
+   * The text stays escaped.
+   */
+  public function testHighlight(): void {
+    $search = $this->service('fr', [], ['results' => []]);
+
+    $this->assertSame('Les <mark>Études</mark> sur les <mark>souris</mark> &lt;b&gt;', $search->highlight('Les Études sur les souris <b>', 'etude SOURIS'));
+    $this->assertSame('a b c', $search->highlight('a b c', 'a'), 'One letter words are not marked.');
+    $this->assertSame('R&amp;D <mark>labs</mark>', $search->highlight('R&D labs', 'labs'), 'Escaped once.');
+  }
+
+  /**
+   * Suggestions are asked for with the language and roles, and cleaned.
+   */
+  public function testSuggestions(): void {
+    $search = $this->service('fr', ['authenticated'], [
+      'suggestions' => [
+        ['text' => 'souris blanches', 'url' => NULL],
+        ['text' => 'FAQ sur les souris', 'url' => 'https://www.example.ca/faq.pdf'],
+        ['text' => 'Bad link', 'url' => 'javascript:alert(1)'],
+        ['text' => '  '],
+        'bad',
+      ],
+    ]);
+
+    $this->assertSame([
+      ['text' => 'souris blanches', 'url' => NULL],
+      ['text' => 'FAQ sur les souris', 'url' => 'https://www.example.ca/faq.pdf'],
+      ['text' => 'Bad link', 'url' => NULL],
+    ], $search->suggest('  sou '));
+    $this->assertSame([['query' => 'sou', 'langcode' => 'fr', 'roles' => ['authenticated']]], $this->sent);
+
+    $this->assertSame([], $search->suggest('s'), 'Too short.');
+    $this->assertCount(1, $this->sent);
+
+    $this->assertSame([], $this->service('en', [], new ApiException('HTTP 429', 429, TRUE))->suggest('mice'), 'Failures give no suggestions.');
   }
 
 }

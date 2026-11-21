@@ -97,6 +97,25 @@ final class SearchDisplayForm extends ConfigFormBase {
       $form['search_mode']['drupal']['#disabled'] = TRUE;
       $form['search_mode']['#description'] = $this->t('Your plan uses the page hosted by WahoSearch. Search inside your Drupal pages and custom page addresses come with the Starter, Pro and Enterprise plans.');
     }
+    $form['search_filters'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Let visitors filter and sort the results'),
+      '#description' => $this->t('By type (pages or files), content type and topic, with the values found in your own content, and by best match, newest or title. Visitors can also choose to search the exact words.'),
+      '#default_value' => $config->get('search_filters') ?? TRUE,
+      '#states' => [
+        'visible' => [
+          ':input[name="search_page"]' => ['checked' => TRUE],
+          ':input[name="search_mode"]' => ['value' => 'drupal'],
+        ],
+      ],
+    ];
+    $form['search_suggestions'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Suggest searches while visitors type'),
+      '#description' => $this->t('Earlier searches on this site that found something, and titles of pages the visitor may see.'),
+      '#default_value' => $config->get('search_suggestions') ?? TRUE,
+      '#states' => ['visible' => [':input[name="search_page"]' => ['checked' => TRUE]]],
+    ];
     $form['addresses'] = [
       '#type' => 'details',
       '#title' => $this->t('Page address'),
@@ -153,6 +172,8 @@ final class SearchDisplayForm extends ConfigFormBase {
     $this->config('wahosearch_connector.settings')
       ->set('search_page', (bool) $form_state->getValue('search_page'))
       ->set('search_mode', $form_state->getValue('search_mode') === 'hosted' || !$this->embed->planAllowsDrupalPage() ? 'hosted' : 'drupal')
+      ->set('search_filters', (bool) $form_state->getValue('search_filters'))
+      ->set('search_suggestions', (bool) $form_state->getValue('search_suggestions'))
       ->set('chatbot', (bool) $form_state->getValue('chatbot'))
       ->save();
     // Custom page addresses come with the paid plans.

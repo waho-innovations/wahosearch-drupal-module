@@ -32,4 +32,17 @@ class FakeApiClient extends ApiClient {
     return $answer;
   }
 
+  /**
+   * {@inheritdoc}
+   *
+   * Answers from state 'wahosearch_connector_test.suggestions' and adds each
+   * request to 'wahosearch_connector_test.suggest_requests'.
+   */
+  public function suggest(array $request): array {
+    $requests = $this->state->get('wahosearch_connector_test.suggest_requests', []);
+    $requests[] = $request;
+    $this->state->set('wahosearch_connector_test.suggest_requests', $requests);
+    return ['suggestions' => $this->state->get('wahosearch_connector_test.suggestions', [])];
+  }
+
 }
