@@ -82,6 +82,18 @@ class SiteSearch {
   ) {}
 
   /**
+   * The form of the platform's reference for clicks on results.
+   */
+  public const CLICK_REF = '/^[sc]\d{1,18}\.[a-f0-9]{24}$/';
+
+  /**
+   * Returns the click reference when it has the platform's form, or NULL.
+   */
+  public static function cleanClickRef(mixed $ref): ?string {
+    return is_string($ref) && preg_match(self::CLICK_REF, $ref) ? $ref : NULL;
+  }
+
+  /**
    * Keeps the filter values the platform accepts, from the page address.
    *
    * @return array
@@ -131,7 +143,9 @@ class SiteSearch {
    *   hosted_only (TRUE when the plan only allows the hosted page), mode
    *   ("ai" or "basic": how the results were found), notice (string or NULL,
    *   ready to show: why the exact words were searched instead of smart search)
-   *   and facets (the values to filter by, see ::facets(), or NULL).
+   *   facets (the values to filter by, see ::facets(), or NULL) and click_ref
+   *   (sent back with a click on a result, see ::CLICK_REF, or NULL). Each
+   *   result has its position in the whole list.
    */
   public function search(string $query, int $page = 1, array $filters = []): array {
     $langcode = $this->language();
@@ -147,6 +161,7 @@ class SiteSearch {
       'mode' => $filters['mode'],
       'notice' => NULL,
       'facets' => NULL,
+      'click_ref' => NULL,
     ];
     $query = self::cleanQuery($query);
     if ($query === '') {
@@ -187,11 +202,13 @@ class SiteSearch {
       return $outcome;
     }
 
-    foreach ($response['results'] ?? [] as $item) {
+    $perPage = is_int($response['per_page'] ?? NULL) && $response['per_page'] > 0 ? $response['per_page'] : 10;
+    foreach ($response['results'] ?? [] as $i => $item) {
       if (is_array($item) && ($result = $this->result($item, $query))) {
-        $outcome['results'][] = $result;
+        $outcome['results'][] = $result + ['position' => ($page - 1) * $perPage + (int) $i + 1];
       }
     }
+    $outcome['click_ref'] = self::cleanClickRef($response['click_ref'] ?? NULL);
     $outcome['has_more'] = !empty($response['has_more']) && $page < self::MAX_PAGE;
     $outcome['mode'] = ($response['mode'] ?? NULL) === 'basic' ? 'basic' : 'ai';
     $outcome['notice'] = $this->notice($response['notice'] ?? NULL);

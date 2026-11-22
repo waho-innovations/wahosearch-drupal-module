@@ -156,6 +156,8 @@ function wahosearch_connector_theme(): array {
         'page' => 1,
         'previous_url' => NULL,
         'next_url' => NULL,
+        'click_ref' => NULL,
+        'click_url' => NULL,
       ],
     ],
     'wahosearch_search_filters' => [

@@ -18,11 +18,13 @@
  * - result.tags: tag names.
  * - result.extension: the file extension, such as "pdf", for files.
  * - result.parent: for files, the page the file belongs to (title and url).
+ * - result.position: the place of the result in the whole list, from 1. Keep
+ *   data-wahosearch-position on the link so clicks count in the reports.
  */
 #}
 <article class="wahosearch-result wahosearch-result--{{ result.type }}">
   <h3 class="wahosearch-result__title">
-    <a href="{{ result.url }}">{{ result.title }}</a>
+    <a href="{{ result.url }}" data-wahosearch-position="{{ result.position }}">{{ result.title }}</a>
     {% if result.type == 'file' and result.extension %}
       <span class="wahosearch-result__badge">{{ result.extension|upper }}</span>
     {% endif %}

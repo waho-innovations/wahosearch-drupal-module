@@ -11,10 +11,13 @@ use Drupal\Core\Flood\FloodInterface;
 use Drupal\Core\PageCache\ResponsePolicy\KillSwitch;
 use Drupal\Core\Render\Markup;
 use Drupal\Core\Url;
+use Drupal\wahosearch_connector\Exception\ApiException;
+use Drupal\wahosearch_connector\Service\ApiClient;
 use Drupal\wahosearch_connector\Service\SiteSearch;
 use Drupal\wahosearch_connector\Service\WidgetEmbed;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -35,11 +38,17 @@ final class SearchPageController extends ControllerBase {
    */
   private const SUGGEST_LIFETIME = 300;
 
+  /**
+   * Clicks on results one visitor may report per minute.
+   */
+  private const CLICKS_PER_MINUTE = 60;
+
   public function __construct(
     private readonly WidgetEmbed $embed,
     private readonly SiteSearch $search,
     private readonly KillSwitch $pageCacheKillSwitch,
     private readonly FloodInterface $flood,
+    private readonly ApiClient $apiClient,
   ) {}
 
   /**
@@ -51,6 +60,7 @@ final class SearchPageController extends ControllerBase {
       $container->get('wahosearch_connector.site_search'),
       $container->get('page_cache_kill_switch'),
       $container->get('flood'),
+      $container->get('wahosearch_connector.api_client'),
     );
   }
 
@@ -96,6 +106,14 @@ final class SearchPageController extends ControllerBase {
     $build['#error'] = $outcome['error'];
     $build['#notice'] = $outcome['notice'];
     $build['#page'] = $outcome['page'];
+    // Further pages keep the reference of the first one, so their clicks
+    // count for the same search.
+    $clickRef = $outcome['click_ref'] ?? SiteSearch::cleanClickRef($input['ref'] ?? NULL);
+    if ($clickRef !== NULL) {
+      $build['#click_ref'] = $clickRef;
+      $build['#click_url'] = Url::fromRoute('wahosearch_connector.click')->toString();
+      $build['#attached']['library'][] = 'wahosearch_connector/search_click';
+    }
     foreach ($outcome['results'] as $result) {
       // Escaped by SiteSearch::highlight(); only <mark> is added.
       $result['snippet_html'] = Markup::create($result['snippet_html']);
@@ -116,12 +134,47 @@ final class SearchPageController extends ControllerBase {
       ];
     }
     if ($outcome['page'] > 1) {
-      $build['#previous_url'] = $this->pageUrl($query, $outcome['page'] - 1, $filters);
+      $build['#previous_url'] = $this->pageUrl($query, $outcome['page'] - 1, $filters, $clickRef);
     }
     if ($outcome['has_more']) {
-      $build['#next_url'] = $this->pageUrl($query, $outcome['page'] + 1, $filters);
+      $build['#next_url'] = $this->pageUrl($query, $outcome['page'] + 1, $filters, $clickRef);
     }
     return $build;
+  }
+
+  /**
+   * Passes a click on a result on to the platform, for the reports.
+   *
+   * The search page script sends it with navigator.sendBeacon as JSON:
+   * {"ref": "...", "url": "...", "position": 1}. Only the page address, its
+   * place in the list and the search it came from are sent; the platform
+   * saves pages of this website only, once per search.
+   */
+  public function click(Request $request): Response {
+    $response = new Response('', 204, ['Cache-Control' => 'no-store']);
+    $ip = (string) $request->getClientIp();
+    if (strlen((string) $request->getContent()) > 4000 || !$this->flood->isAllowed('wahosearch_connector.click', self::CLICKS_PER_MINUTE, 60, $ip)) {
+      return $response;
+    }
+    $this->flood->register('wahosearch_connector.click', 60, $ip);
+
+    $data = json_decode((string) $request->getContent(), TRUE);
+    $ref = SiteSearch::cleanClickRef(is_array($data) ? ($data['ref'] ?? NULL) : NULL);
+    $url = is_array($data) && is_string($data['url'] ?? NULL) ? $data['url'] : '';
+    if ($ref === NULL || strlen($url) > 2048 || !preg_match('#^https?://#i', $url)) {
+      return $response;
+    }
+    $body = ['click_ref' => $ref, 'url' => $url];
+    if (is_int($data['position'] ?? NULL) && $data['position'] >= 1 && $data['position'] <= 1000) {
+      $body['position'] = $data['position'];
+    }
+    try {
+      $this->apiClient->click($body);
+    }
+    catch (ApiException) {
+      // A lost click only makes the reports a little less complete.
+    }
+    return $response;
   }
 
   /**
@@ -233,10 +286,13 @@ final class SearchPageController extends ControllerBase {
   /**
    * Returns the address of another page of the same search.
    */
-  private function pageUrl(string $query, int $page, array $filters): string {
+  private function pageUrl(string $query, int $page, array $filters, ?string $clickRef = NULL): string {
     $options = ['query' => ['q' => $query] + SiteSearch::filterQuery($filters)];
     if ($page > 1) {
       $options['query']['page'] = $page;
+    }
+    if ($clickRef !== NULL) {
+      $options['query']['ref'] = $clickRef;
     }
     return Url::fromRoute('wahosearch_connector.search_page', [], $options)->toString();
   }

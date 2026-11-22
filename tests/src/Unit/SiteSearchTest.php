@@ -149,9 +149,26 @@ class SiteSearchTest extends UnitTestCase {
       'tags' => ['Mice'],
       'extension' => 'pdf',
       'parent' => ['title' => 'Guidelines', 'url' => 'https://www.example.ca/guidelines'],
+      'position' => 1,
     ], $outcome['results'][0]);
+    $this->assertSame(3, $outcome['results'][1]['position'], 'Positions are those the platform sent, also around a skipped result.');
+    $this->assertNull($outcome['click_ref']);
     $this->assertSame('notes.pdf', $outcome['results'][1]['title'], 'A missing title falls back to the file name.');
     $this->assertNull($outcome['results'][1]['parent']);
+  }
+
+  /**
+   * The click reference is checked, and positions continue on later pages.
+   */
+  public function testClickReference(): void {
+    $result = ['id' => 'node:1:en', 'type' => 'page', 'title' => 'Mice', 'url' => 'https://www.example.ca/mice'];
+    $search = $this->service('en', [], ['results' => [$result], 'has_more' => FALSE, 'per_page' => 10, 'click_ref' => 's42.0123456789abcdef01234567']);
+    $outcome = $search->search('mice', 2);
+    $this->assertSame('s42.0123456789abcdef01234567', $outcome['click_ref']);
+    $this->assertSame(11, $outcome['results'][0]['position']);
+
+    $search = $this->service('en', [], ['results' => [$result], 'has_more' => FALSE, 'click_ref' => '"><script>']);
+    $this->assertNull($search->search('mice')['click_ref']);
   }
 
   /**

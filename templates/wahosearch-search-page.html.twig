@@ -19,6 +19,9 @@
  *   wahosearch-search-filters.html.twig, or empty when turned off.
  * - page: the page number, starting at 1.
  * - previous_url, next_url: links to the other pages, or empty.
+ * - click_ref, click_url: the reference of this search and the address that
+ *   receives clicks on results, for the reports. Keep the data-wahosearch-click
+ *   attributes on the result list so clicks are counted.
  */
 #}
 <div class="wahosearch-search" lang="{{ langcode }}">
@@ -44,7 +47,7 @@
   </div>
 
   {% if results is not empty %}
-    <ol class="wahosearch-search__results">
+    <ol class="wahosearch-search__results"{% if click_ref %} data-wahosearch-click="{{ click_ref }}" data-wahosearch-click-url="{{ click_url }}"{% endif %}>
       {% for result in results %}
         <li class="wahosearch-search__item">{{ result }}</li>
       {% endfor %}

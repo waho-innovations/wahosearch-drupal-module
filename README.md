@@ -179,6 +179,11 @@ How the search page works:
   pattern: arrow keys, Enter and Escape work, and screen readers announce how
   many suggestions there are. A search suggestion searches; a page title opens
   the page.
+- Clicks: when a visitor opens a result, a small script tells WahoSearch which
+  page and its place in the list (`/wahosearch/click`, passed on signed), for
+  the reports of the most clicked pages. Nothing about the visitor is sent, and
+  opening the result is not slowed down. Without JavaScript the page works the
+  same; the click is just not counted.
 
 ### Changing how results look
 
@@ -189,7 +194,9 @@ The page uses three Twig templates from the module's `templates` folder:
 - `wahosearch-search-filters.html.twig`: the filter and sort bar.
 - `wahosearch-search-result.html.twig`: one result (title, file type, section,
   passage with the matching words marked, content type, and for files the page
-  they are attached to).
+  they are attached to). Keep `data-wahosearch-position` on the title link, and
+  `data-wahosearch-click` on the result list in the page template, or clicks
+  are not counted in the reports.
 
 To change them, copy either file into your theme's `templates` folder, edit the
 copy and clear the cache. Each template lists the variables it receives. The

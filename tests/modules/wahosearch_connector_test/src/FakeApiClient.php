@@ -45,4 +45,16 @@ class FakeApiClient extends ApiClient {
     return ['suggestions' => $this->state->get('wahosearch_connector_test.suggestions', [])];
   }
 
+  /**
+   * {@inheritdoc}
+   *
+   * Adds each click to 'wahosearch_connector_test.clicks'.
+   */
+  public function click(array $request): array {
+    $clicks = $this->state->get('wahosearch_connector_test.clicks', []);
+    $clicks[] = $request;
+    $this->state->set('wahosearch_connector_test.clicks', $clicks);
+    return ['saved' => TRUE];
+  }
+
 }

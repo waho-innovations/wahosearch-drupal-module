@@ -118,6 +118,40 @@ class SearchPageTest extends BrowserTestBase {
   }
 
   /**
+   * Clicks on results reach the platform, also from later pages.
+   */
+  public function testClicks(): void {
+    $this->answer([
+      'has_more' => TRUE,
+      'per_page' => 10,
+      'click_ref' => 's42.0123456789abcdef01234567',
+      'results' => [['id' => 'node:5:en', 'type' => 'page', 'title' => 'Housing news', 'url' => 'https://www.example.ca/news/housing']],
+    ]);
+    $this->drupalGet('/search', ['query' => ['q' => 'housing']]);
+    $session = $this->assertSession();
+    $session->elementAttributeContains('css', 'ol[data-wahosearch-click]', 'data-wahosearch-click', 's42.0123456789abcdef01234567');
+    $session->elementAttributeContains('css', 'ol[data-wahosearch-click]', 'data-wahosearch-click-url', '/wahosearch/click');
+    $session->elementAttributeContains('css', '.wahosearch-result__title a', 'data-wahosearch-position', '1');
+    $session->responseContains('search-click.js');
+
+    // The next page has no reference of its own and keeps the first one.
+    $this->answer(['has_more' => FALSE, 'per_page' => 10, 'results' => [['id' => 'node:6:en', 'type' => 'page', 'title' => 'Older news', 'url' => 'https://www.example.ca/news/older']]]);
+    $this->clickLink('More results');
+    $session->elementAttributeContains('css', 'ol[data-wahosearch-click]', 'data-wahosearch-click', 's42.0123456789abcdef01234567');
+    $session->elementAttributeContains('css', '.wahosearch-result__title a', 'data-wahosearch-position', '11');
+
+    $post = function (string $body): int {
+      $client = $this->getHttpClient();
+      return $client->request('POST', $this->buildUrl('/wahosearch/click'), ['body' => $body, 'http_errors' => FALSE])->getStatusCode();
+    };
+    $this->assertSame(204, $post(json_encode(['ref' => 's42.0123456789abcdef01234567', 'url' => 'https://www.example.ca/news/older', 'position' => 11])));
+    $this->assertSame(204, $post(json_encode(['ref' => 'forged', 'url' => 'https://www.example.ca/news/older'])));
+    $this->assertSame(204, $post(json_encode(['ref' => 's42.0123456789abcdef01234567', 'url' => 'javascript:alert(1)'])));
+    \Drupal::state()->resetCache();
+    $this->assertSame([['click_ref' => 's42.0123456789abcdef01234567', 'url' => 'https://www.example.ca/news/older', 'position' => 11]], \Drupal::state()->get('wahosearch_connector_test.clicks', []));
+  }
+
+  /**
    * Visitors filter and sort with the values of the site's own content.
    */
   public function testFiltersAndSort(): void {

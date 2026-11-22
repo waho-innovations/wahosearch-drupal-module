@@ -170,8 +170,10 @@ Response:
 ```json
 {
   "has_more": true,
+  "per_page": 10,
   "mode": "basic",
   "notice": {"code": "ai_limit_reached", "message": "..."},
+  "click_ref": "s5821.3f0c9a1b2d4e5f60718293a4",
   "facets": {
     "types": {"page": 190, "file": 137},
     "content_types": [{"value": "guideline", "label": "Guideline", "count": 42}],
@@ -191,6 +193,10 @@ Response:
   the results.
 - `facets` comes with the first page when asked for: the values found in the
   site's content that the visitor may see, in the page language.
+- `click_ref` comes with the first page: the reference of this search, sent
+  back with clicks on its results (`search/click`). The module keeps it in the
+  links to the next pages (`ref`). `per_page` gives each result its position
+  in the whole list.
 
 Errors are `{"code": "...", "message": "..."}` with `message` in the language
 of the request. `403 hosted_page_only` means the plan (Free) only allows the
@@ -202,6 +208,22 @@ frame instead.
 (whether the plan searches Word, Excel and PowerPoint files). The module shows `message` to visitors for `rate_limited`,
 `search_limit_reached`, `search_busy` and `empty_query`, and a general message
 for anything else.
+
+### `POST search/click`
+
+Sent when a visitor opens a result on the Drupal search page, for the reports
+of the most clicked pages. The page sends the click with
+`navigator.sendBeacon` to the module's `/wahosearch/click` address (at most 60
+a minute per visitor), and this server passes it on. Times out after 3
+seconds; a failure is ignored.
+
+```json
+{"click_ref": "s5821.3f0c9a1b2d4e5f60718293a4", "url": "https://www.example.ca/fr/souris", "position": 3}
+```
+
+Response: `{"saved": true}`, or `{"saved": false}` when the page is not on
+this website, the click was already saved for that search, or the reference is
+older than a day. Nothing about the visitor is sent.
 
 ### `POST search/suggest`
 

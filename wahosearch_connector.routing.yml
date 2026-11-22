@@ -47,6 +47,14 @@ wahosearch_connector.search_page:
   requirements:
     _permission: 'access content'
 
+wahosearch_connector.click:
+  path: '/wahosearch/click'
+  defaults:
+    _controller: '\Drupal\wahosearch_connector\Controller\SearchPageController::click'
+  methods: [POST]
+  requirements:
+    _permission: 'access content'
+
 wahosearch_connector.suggest:
   path: '/wahosearch/suggest'
   defaults:

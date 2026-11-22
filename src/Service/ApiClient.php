@@ -54,6 +54,11 @@ class ApiClient {
    */
   protected const SUGGEST_TIMEOUT = 3;
 
+  /**
+   * Seconds to wait when passing on a click; the visitor is already gone.
+   */
+  protected const CLICK_TIMEOUT = 3;
+
   public function __construct(
     protected ClientInterface $httpClient,
     protected ConfigFactoryInterface $configFactory,
@@ -202,6 +207,19 @@ class ApiClient {
    */
   public function suggest(array $request): array {
     return $this->request('POST', 'search/suggest', $request, self::SUGGEST_TIMEOUT);
+  }
+
+  /**
+   * Reports a click on a search result, for the reports.
+   *
+   * @param array $request
+   *   The click_ref the search returned, the url of the result and its
+   *   position in the list.
+   *
+   * @throws \Drupal\wahosearch_connector\Exception\ApiException
+   */
+  public function click(array $request): array {
+    return $this->request('POST', 'search/click', $request, self::CLICK_TIMEOUT);
   }
 
   /**
