@@ -64,7 +64,7 @@ final class ContentTypesForm extends FormBase {
         $this->t('Content type'),
         $this->t('Index'),
         $this->t('Include restricted content'),
-        $this->t('Include PDFs'),
+        $this->t('Include files'),
         $this->t('Published items'),
         $this->t('Indexed documents'),
         $this->t('Fields'),
@@ -95,7 +95,7 @@ final class ContentTypesForm extends FormBase {
       ];
       $form['bundles'][$bundle]['include_pdfs'] = [
         '#type' => 'checkbox',
-        '#title' => $this->t('Include PDF files of @type', ['@type' => $label]),
+        '#title' => $this->t('Include PDF, Word, Excel and PowerPoint files of @type', ['@type' => $label]),
         '#title_display' => 'invisible',
         '#default_value' => !empty($settings[$bundle]['include_pdfs']),
       ];

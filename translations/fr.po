@@ -373,11 +373,11 @@ msgstr "Affichage de la recherche"
 msgid "WahoSearch box"
 msgstr "Boîte de recherche WahoSearch"
 
-msgid "Include PDFs"
-msgstr "Inclure les PDF"
+msgid "Include files"
+msgstr "Inclure les fichiers"
 
-msgid "Include PDF files of @type"
-msgstr "Inclure les fichiers PDF de @type"
+msgid "Include PDF, Word, Excel and PowerPoint files of @type"
+msgstr "Inclure les fichiers PDF, Word, Excel et PowerPoint de @type"
 
 msgid "I understand that unticking a content type removes its content from search"
 msgstr "Je comprends que décocher un type de contenu retire son contenu de la recherche"

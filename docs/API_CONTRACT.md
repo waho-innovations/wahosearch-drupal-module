@@ -72,8 +72,10 @@ Optional response, to refuse single documents without failing the others:
 - `deferred` is not a failure and does not stop a full sync from finishing.
   Use it for quota limits and for PDFs with no extractable text. The module
   offers these documents again on later runs.
-- `need_files` lists PDF documents whose contents the platform needs. Leave out
-  any document whose `file.sha256` it already holds.
+- `need_files` lists file documents whose contents the platform needs. Leave out
+  any document whose `file.sha256` it already holds, and Word, Excel or
+  PowerPoint files when the plan does not include them (`office_files` in
+  `GET connector/ping`).
 
 ### `POST content/file`
 
@@ -89,7 +91,12 @@ Sent once for each ID in `need_files`, with a 120 second timeout.
 }
 ```
 
-Verify `sha256` before storing the file.
+`mime` is one of `application/pdf`,
+`application/vnd.openxmlformats-officedocument.wordprocessingml.document`,
+`application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` or
+`application/vnd.openxmlformats-officedocument.presentationml.presentation`,
+and must match the document's `document_type`. Verify `sha256` before storing
+the file. A file whose plan does not include it is refused with 403.
 
 ### `POST content/delete`
 
@@ -190,8 +197,9 @@ of the request. `403 hosted_page_only` means the plan (Free) only allows the
 hosted page: the module then shows `{platform URL}/embed/{site ID}/search` in a
 frame instead.
 
-`GET connector/ping` also returns `plan` and `search_page` (`drupal` or
-`hosted`), which the module keeps to choose the page. The module shows `message` to visitors for `rate_limited`,
+`GET connector/ping` also returns `plan`, `search_page` (`drupal` or
+`hosted`), which the module keeps to choose the page, and `office_files`
+(whether the plan searches Word, Excel and PowerPoint files). The module shows `message` to visitors for `rate_limited`,
 `search_limit_reached`, `search_busy` and `empty_query`, and a general message
 for anything else.
 
@@ -267,10 +275,11 @@ A document can also carry `priority_section`, for example
 It only ever applies to whole sections. Treat it as a capped signal inside
 relevance scoring, and when choosing what to index first under a quota.
 
-### PDF documents
+### File documents
 
-A PDF is its own document with the same access as the page it is attached to.
-Web pages have no `document_type` key.
+A file is its own document with the same access as the page it is attached to.
+`document_type` is `pdf`, `docx`, `xlsx` or `pptx`. Web pages have no
+`document_type` key.
 
 ```json
 {
@@ -294,8 +303,11 @@ Web pages have no `document_type` key.
 }
 ```
 
-The platform extracts the text. The module only sends files with the PDF MIME
-type, and it cannot tell whether a PDF is scanned.
+The platform extracts the text. The module only sends files with the four
+MIME types above, and it cannot tell whether a PDF is scanned. The platform
+searches the text of `docx`, `xlsx` and `pptx` files only on plans with
+`office_files`; on other plans it keeps them listed with the status "plan" and
+does not count them against the document quota.
 
 ### Value shape by field type
 

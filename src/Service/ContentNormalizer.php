@@ -31,6 +31,19 @@ use Drupal\taxonomy\TermInterface;
 class ContentNormalizer {
 
   /**
+   * Files sent as their own documents: MIME type to document type.
+   *
+   * The old binary formats (doc, xls, ppt) are not sent; their text cannot be
+   * read by the platform.
+   */
+  public const FILE_TYPES = [
+    'application/pdf' => 'pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'pptx',
+  ];
+
+  /**
    * First user ID used for the throwaway per-role accounts.
    *
    * The entity access cache is keyed by user ID, so each role needs its own.
@@ -219,8 +232,10 @@ class ContentNormalizer {
   }
 
   /**
-   * Builds one document per PDF attached to a translation.
+   * Builds one document per file attached to a translation.
    *
+   * PDF, Word, Excel and PowerPoint files (pdf, docx, xlsx, pptx) are sent. The
+   * platform searches the text of the Office files on the Enterprise plan only.
    * The file itself is only uploaded when the platform asks for it.
    *
    * @return array<string, array>
@@ -243,7 +258,8 @@ class ContentNormalizer {
         [$file, $title] = $isFile
           ? [$item->entity, (string) $item->description]
           : $this->resolveMediaFile($item->entity, $node->language()->getId(), $accounts);
-        if (!$file instanceof FileInterface || $file->getMimeType() !== 'application/pdf') {
+        $type = $file instanceof FileInterface ? (self::FILE_TYPES[$file->getMimeType()] ?? NULL) : NULL;
+        if ($type === NULL) {
           continue;
         }
         $id = $parent['id'] . ':file:' . $file->id();
@@ -258,7 +274,7 @@ class ContentNormalizer {
         }
         $document = [
           'id' => $id,
-          'document_type' => 'pdf',
+          'document_type' => $type,
           'entity_type' => 'node',
           'entity_id' => $parent['entity_id'],
           'uuid' => $file->uuid(),

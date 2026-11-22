@@ -157,9 +157,34 @@ class PdfDocumentsTest extends ConnectorKernelTestBase {
    * Other formats are never presented as searchable documents.
    */
   public function testOnlyPdfs(): void {
-    $this->articleWith([$this->createFile('notes.txt', 'text/plain')]);
+    $this->articleWith([
+      $this->createFile('notes.txt', 'text/plain'),
+      $this->createFile('old-form.doc', 'application/msword', 'old word'),
+    ]);
     $this->drainQueue();
     $this->assertCount(1, $this->sentDocuments());
+  }
+
+  /**
+   * Word, Excel and PowerPoint files are sent like PDFs, with their own type.
+   */
+  public function testOfficeFiles(): void {
+    $files = [
+      'docx' => $this->createFile('form.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'PK word'),
+      'xlsx' => $this->createFile('fees.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'PK sheet'),
+      'pptx' => $this->createFile('module.pptx', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'PK slides'),
+    ];
+    $node = $this->articleWith(array_values($files));
+    $this->drainQueue();
+
+    $documents = $this->sentDocuments();
+    $this->assertCount(4, $documents);
+    foreach ($files as $type => $file) {
+      $document = $documents['node:' . $node->id() . ':en:file:' . $file->id()];
+      $this->assertSame($type, $document['document_type']);
+      $this->assertSame($file->getMimeType(), $document['file']['mime']);
+      $this->assertSame(hash_file('sha256', $file->getFileUri()), $document['file']['sha256']);
+    }
   }
 
   /**

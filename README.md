@@ -1,6 +1,6 @@
 # WahoSearch Connector
 
-Sends selected Drupal content and PDF files to the hosted WahoSearch platform,
+Sends selected Drupal content and its files to the hosted WahoSearch platform,
 keeps them up to date, and embeds search and the chatbot inside your pages.
 
 Works on Drupal 10.2+ and 11, PHP 8.1+. Needs Node, Taxonomy and User. For
@@ -27,7 +27,8 @@ Go to Configuration > Search and metadata > WahoSearch Connector.
    test connection. The page shows the connection status and the last
    successful synchronization.
 2. Content types: tick what should be indexed. Anything not ticked is not sent.
-   Tick Include PDFs to index PDF files attached to that content type.
+   Tick Include files to index the PDF, Word, Excel and PowerPoint files
+   attached to that content type.
 3. Choose the fields for each content type and their names in the index.
    Paragraphs fields are offered too: the text of their paragraphs, also
    nested ones, is sent as page content in the language of each translation.
@@ -68,17 +69,24 @@ Preview changes shows what would be added or removed before you save. Saving
 rules that remove content, or unticking a content type that has indexed content,
 needs a confirmation tick. Each change is written to the log.
 
-## PDF files
+## Files
 
-Text PDFs in file fields and in file media items are indexed as separate
-documents, with the same access as their page. A media file that anonymous
+PDF, Word, Excel and PowerPoint files (pdf, docx, xlsx, pptx) in file fields
+and in file media items are indexed as separate documents, with the same access
+as their page. A media file that anonymous
 visitors may view counts as public, even when logged-in roles lack the "View
 media" permission. The platform extracts the text,
 and only asks for a file when it does not already have that exact version.
 
+The text of Word, Excel and PowerPoint files is searched on the Enterprise
+plan. On other plans the platform lists them without searching their text, and
+the files stay findable through the page they are attached to. After a move to
+Enterprise, run a full sync so the platform can ask for the files.
+
 Scanned PDFs need OCR, which is not supported. The platform reports those as
 held back. Files over the size limit on the Connection page are skipped and
-logged. Other file types are not sent.
+logged. Other file types, including the old doc, xls and ppt formats, are not
+sent.
 
 ## How sync behaves
 

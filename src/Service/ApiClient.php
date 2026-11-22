@@ -118,7 +118,7 @@ class ApiClient {
   }
 
   /**
-   * Sends the contents of a PDF the platform asked for.
+   * Sends a file (PDF, Word, Excel, PowerPoint) the platform asked for.
    */
   public function uploadFile(string $id, array $file, string $content): array {
     return $this->request('POST', 'content/file', [
