@@ -9,10 +9,26 @@ French admin screens. See [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
 ## Install
 
-With Composer, if the package is available to your project:
+The Composer package is hosted in a private GitHub repository. Team and
+customer installations both require read access to that repository. Use a
+fine-grained GitHub token scoped to this repository with read-only Contents
+permission. Store it as `github-oauth.github.com` in Composer's private auth
+configuration, or supply it through `COMPOSER_AUTH` from your CI secret store.
+Keep it out of `composer.json` and Git. See [Composer's GitHub authentication
+guide](https://getcomposer.org/doc/articles/authentication-for-private-packages.md#github-oauth).
 
-    composer require drupal/wahosearch_connector
+Once `v1.4.0` or a later `1.x` release is tagged on GitHub, run these commands
+from the Drupal project's root:
+
+    composer config repositories.wahosearch-connector vcs https://github.com/waho-innovations/wahosearch-drupal-module.git
+    composer require --prefer-dist 'waho-innovations/wahosearch-connector:^1.4'
     drush en wahosearch_connector
+
+The Drupal recommended project already allows the `composer/installers` plugin
+and installs this module to `web/modules/contrib/wahosearch_connector`. For a
+custom project layout, allow that plugin in the root project's Composer
+configuration and make sure its `drupal-module` installer path is under the
+Drupal web root.
 
 Or copy this folder to `modules/custom/wahosearch_connector` and enable it on the
 Extend page.
@@ -48,12 +64,34 @@ Two permissions control access: "Administer WahoSearch Connector" for the screen
 and sync controls, and "Exclude individual content from WahoSearch" for the
 checkbox on edit forms.
 
-On production, keep the secret in `settings.php`. It overrides the stored value
-and hides the field:
+### Dev, test, and production connections
 
+Use a separate site ID and secret issued by the platform for each deployment.
+Set `WAHOSEARCH_ENDPOINT` to the full platform URL for that deployment:
+
+| Environment | Platform URL |
+| --- | --- |
+| Dev | `https://dev.wahosearch.app` |
+| Test | `https://test.wahosearch.ai` |
+| Production | `https://wahosearch.app` |
+
+Set `WAHOSEARCH_SITE_ID` and `WAHOSEARCH_SECRET` in the deployment environment,
+then add these overrides to Drupal's `settings.php`:
+
+    $config['wahosearch_connector.settings']['endpoint'] = getenv('WAHOSEARCH_ENDPOINT');
+    $config['wahosearch_connector.settings']['site_id'] = getenv('WAHOSEARCH_SITE_ID');
     $settings['wahosearch_connector_secret'] = getenv('WAHOSEARCH_SECRET');
 
-The secret is never included in a config export and never reaches the browser.
+Set all three variables before running Drupal or Drush. An unset or empty
+`WAHOSEARCH_SECRET` lets the connector fall back to the secret stored in the
+database. A nonempty override takes precedence and hides the secret field. The
+secret is excluded from config exports and browser output.
+
+Drupal's Connection form may display the stored platform URL and site ID. To
+see the effective values before saving and testing the connection, run:
+
+    drush config:get wahosearch_connector.settings endpoint --include-overridden
+    drush config:get wahosearch_connector.settings site_id --include-overridden
 
 ## Indexing rules
 
