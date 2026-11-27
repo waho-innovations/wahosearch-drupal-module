@@ -1,0 +1,221 @@
+<?php
+
+/**
+ * @file
+ * Hooks for the WahoSearch Connector module.
+ */
+
+declare(strict_types=1);
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Element;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\node\NodeInterface;
+use Drupal\taxonomy\TermInterface;
+use Drupal\user\RoleInterface;
+
+/**
+ * Implements hook_help().
+ */
+function wahosearch_connector_help(string $route_name, RouteMatchInterface $route_match): ?string {
+  if ($route_name === 'help.page.wahosearch_connector') {
+    return '<p>' . t('Connects this site to the hosted WahoSearch platform. Choose the content types and fields to index, then run a full synchronization. After that, changes are sent automatically.') . '</p>';
+  }
+  return NULL;
+}
+
+/**
+ * Implements hook_entity_insert().
+ */
+function wahosearch_connector_entity_insert(EntityInterface $entity): void {
+  _wahosearch_connector_entity_changed($entity);
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function wahosearch_connector_entity_update(EntityInterface $entity): void {
+  _wahosearch_connector_entity_changed($entity);
+}
+
+/**
+ * Implements hook_entity_predelete().
+ *
+ * Terms are handled before deletion, while references can still be found.
+ */
+function wahosearch_connector_entity_predelete(EntityInterface $entity): void {
+  if ($entity instanceof TermInterface) {
+    \Drupal::service('wahosearch_connector.sync_manager')->onTermChange($entity);
+  }
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function wahosearch_connector_entity_delete(EntityInterface $entity): void {
+  if ($entity instanceof NodeInterface) {
+    \Drupal::service('wahosearch_connector.sync_manager')->onNodeChange($entity);
+    \Drupal::service('wahosearch_connector.content_selection')->setExcluded('node', $entity->id(), FALSE);
+  }
+  elseif ($entity instanceof RoleInterface) {
+    \Drupal::service('wahosearch_connector.sync_manager')->onPermissionsChanged();
+  }
+}
+
+/**
+ * Queues a changed node or term.
+ */
+function _wahosearch_connector_entity_changed(EntityInterface $entity): void {
+  if ($entity instanceof NodeInterface) {
+    \Drupal::service('wahosearch_connector.sync_manager')->onNodeChange($entity);
+  }
+  elseif ($entity instanceof TermInterface) {
+    \Drupal::service('wahosearch_connector.sync_manager')->onTermChange($entity);
+  }
+  elseif ($entity instanceof RoleInterface && _wahosearch_connector_role_changed($entity)) {
+    \Drupal::service('wahosearch_connector.sync_manager')->onPermissionsChanged();
+  }
+}
+
+/**
+ * Whether a saved role is new or has different permissions.
+ */
+function _wahosearch_connector_role_changed(RoleInterface $role): bool {
+  $original = method_exists($role, 'getOriginal') ? $role->getOriginal() : ($role->original ?? NULL);
+  if (!$original instanceof RoleInterface) {
+    return TRUE;
+  }
+  $before = $original->getPermissions();
+  $after = $role->getPermissions();
+  sort($before);
+  sort($after);
+  return $before !== $after || $original->isAdmin() !== $role->isAdmin();
+}
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter() for node forms.
+ */
+function wahosearch_connector_form_node_form_alter(array &$form, FormStateInterface $form_state, string $form_id): void {
+  $node = $form_state->getFormObject()->getEntity();
+  $selection = \Drupal::service('wahosearch_connector.content_selection');
+  if (!$selection->isBundleEnabled($node->bundle()) || !\Drupal::currentUser()->hasPermission('exclude content from wahosearch')) {
+    return;
+  }
+
+  $form['wahosearch_connector'] = [
+    '#type' => 'details',
+    '#title' => t('WahoSearch'),
+    '#group' => 'advanced',
+    '#weight' => 90,
+  ];
+  $form['wahosearch_connector']['wahosearch_exclude'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Exclude from WahoSearch'),
+    '#description' => t('This item will not appear in website search or chatbot answers.'),
+    '#default_value' => !$node->isNew() && $selection->isExcluded('node', $node->id()),
+  ];
+
+  foreach (Element::children($form['actions']) as $action) {
+    if ($action !== 'delete' && ($form['actions'][$action]['#type'] ?? '') === 'submit' && isset($form['actions'][$action]['#submit'])) {
+      $form['actions'][$action]['#submit'][] = '_wahosearch_connector_node_form_submit';
+    }
+  }
+}
+
+/**
+ * Stores the exclusion choice once the node has an ID.
+ */
+function _wahosearch_connector_node_form_submit(array $form, FormStateInterface $form_state): void {
+  $node = $form_state->getFormObject()->getEntity();
+  if (!$node->id()) {
+    return;
+  }
+  $selection = \Drupal::service('wahosearch_connector.content_selection');
+  $excluded = (bool) $form_state->getValue('wahosearch_exclude');
+  if ($excluded !== $selection->isExcluded('node', $node->id())) {
+    $selection->setExcluded('node', $node->id(), $excluded, (int) \Drupal::currentUser()->id());
+    \Drupal::service('wahosearch_connector.sync_manager')->onNodeChange($node);
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function wahosearch_connector_theme(): array {
+  return [
+    'wahosearch_search_page' => [
+      'variables' => [
+        'form' => NULL,
+        'query' => '',
+        'langcode' => 'en',
+        'results' => [],
+        'error' => NULL,
+        'notice' => NULL,
+        'filters' => NULL,
+        'page' => 1,
+        'previous_url' => NULL,
+        'next_url' => NULL,
+        'click_ref' => NULL,
+        'click_url' => NULL,
+      ],
+    ],
+    'wahosearch_search_filters' => [
+      'variables' => [
+        'action' => '',
+        'query' => '',
+        'values' => [],
+        'facets' => [],
+        'clear_url' => NULL,
+      ],
+    ],
+    'wahosearch_search_result' => [
+      'variables' => [
+        'result' => [],
+      ],
+    ],
+    'wahosearch_search_frame' => [
+      'variables' => [
+        'src' => '',
+        'origin' => '',
+        'title' => '',
+      ],
+    ],
+  ];
+}
+
+/**
+ * Implements hook_cron().
+ */
+function wahosearch_connector_cron(): void {
+  $days = (int) \Drupal::config('wahosearch_connector.settings')->get('log_retention_days');
+  \Drupal::service('wahosearch_connector.sync_log')->purge($days);
+  \Drupal::service('wahosearch_connector.sync_manager')->reconcileIfDue();
+  \Drupal::service('wahosearch_connector.sync_manager')->refreshPlanIfDue();
+}
+
+/**
+ * Implements hook_page_attachments().
+ */
+function wahosearch_connector_page_attachments(array &$attachments): void {
+  $attachments['#cache']['tags'][] = 'config:wahosearch_connector.settings';
+  $attachments['#cache']['contexts'][] = 'route';
+  $attachments['#cache']['contexts'][] = 'languages:language_interface';
+  if (\Drupal::service('router.admin_context')->isAdminRoute()) {
+    return;
+  }
+  $embed = \Drupal::service('wahosearch_connector.widget_embed');
+  if ($embed->isChatbotEnabled()) {
+    $attachments['#attached']['html_head'][] = $embed->scriptTag('chatbot');
+  }
+}
+
+/**
+ * Implements hook_locale_translation_projects_alter().
+ *
+ * Points to the bundled French file wherever the module is installed.
+ */
+function wahosearch_connector_locale_translation_projects_alter(array &$projects): void {
+  $path = \Drupal::service('extension.list.module')->getPath('wahosearch_connector');
+  $projects['wahosearch_connector']['info']['interface translation server pattern'] = $path . '/translations/%language.po';
+}

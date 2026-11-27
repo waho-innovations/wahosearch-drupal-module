@@ -1,0 +1,14 @@
+{#
+/**
+ * @file
+ * The hosted WahoSearch page, shown in a frame.
+ *
+ * Available variables:
+ * - src: the address of the hosted page, with the language and question.
+ * - origin: the platform address, used to resize the frame.
+ * - title: the frame title, for screen readers.
+ */
+#}
+<div class="wahosearch-search wahosearch-search--hosted">
+  <iframe class="wahosearch-frame" src="{{ src }}" title="{{ title }}" data-wahosearch-origin="{{ origin }}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" style="width: 100%; min-height: 32rem; border: 0;"></iframe>
+</div>

@@ -1,0 +1,46 @@
+{#
+/**
+ * @file
+ * One result on the WahoSearch search page.
+ *
+ * To change it, copy this file into your theme's templates folder and edit the
+ * copy. Clear the cache afterwards.
+ *
+ * Available variables:
+ * - result.type: "page" or "file".
+ * - result.title: the page or file title.
+ * - result.url: the link to open.
+ * - result.snippet: the passage that best matches the question, as text.
+ * - result.snippet_html: the same passage, escaped, with the words that match
+ *   the question in <mark>.
+ * - result.heading: the headings above that passage, outermost first.
+ * - result.content_type: the content type label, such as "News".
+ * - result.tags: tag names.
+ * - result.extension: the file extension, such as "pdf", for files.
+ * - result.parent: for files, the page the file belongs to (title and url).
+ * - result.position: the place of the result in the whole list, from 1. Keep
+ *   data-wahosearch-position on the link so clicks count in the reports.
+ */
+#}
+<article class="wahosearch-result wahosearch-result--{{ result.type }}">
+  <h3 class="wahosearch-result__title">
+    <a href="{{ result.url }}" data-wahosearch-position="{{ result.position }}">{{ result.title }}</a>
+    {% if result.type == 'file' and result.extension %}
+      <span class="wahosearch-result__badge">{{ result.extension|upper }}</span>
+    {% endif %}
+  </h3>
+  {% if result.heading is not empty %}
+    <p class="wahosearch-result__section">{{ result.heading|join(' › ') }}</p>
+  {% endif %}
+  {% if result.snippet %}
+    <p class="wahosearch-result__snippet">{{ result.snippet_html ?: result.snippet }}</p>
+  {% endif %}
+  {% if result.parent or result.content_type %}
+    <p class="wahosearch-result__meta">
+      {% if result.content_type %}<span class="wahosearch-result__type">{{ result.content_type }}</span>{% endif %}
+      {% if result.parent %}
+        <span class="wahosearch-result__parent">{{ 'Attached to'|t }} <a href="{{ result.parent.url }}">{{ result.parent.title }}</a></span>
+      {% endif %}
+    </p>
+  {% endif %}
+</article>

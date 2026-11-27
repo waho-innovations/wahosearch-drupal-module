@@ -1,0 +1,249 @@
+/**
+ * WahoSearch search page.
+ *
+ * Kept light so the site theme stays in charge of fonts and colours. Override
+ * the custom properties in your theme to change the accent colours.
+ */
+/* The box block can also stand alone, outside the search page. */
+.wahosearch-search,
+.wahosearch-box {
+  --wahosearch-accent: #1d4ed8;
+  --wahosearch-muted: #5b6472;
+  --wahosearch-border: #d8dde5;
+  --wahosearch-badge-bg: #eef2ff;
+  --wahosearch-error: #b42318;
+  --wahosearch-notice-bg: #fffbeb;
+  --wahosearch-notice-border: #f59e0b;
+  --wahosearch-mark-bg: #fef08a;
+  --wahosearch-option-bg: #eff6ff;
+}
+
+.wahosearch-search {
+  max-width: 48rem;
+  margin-inline: auto;
+  padding: 1.5rem 1rem;
+}
+
+.wahosearch-box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-block-end: 1.5rem;
+}
+
+.wahosearch-box label {
+  flex-basis: 100%;
+  font-weight: 600;
+}
+
+/* The box and its suggestions list, which opens under it. */
+.wahosearch-box__field {
+  position: relative;
+  flex: 1 1 16rem;
+}
+
+.wahosearch-box input[type="search"] {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--wahosearch-border, #d8dde5);
+  border-radius: 0.375rem;
+  font: inherit;
+}
+
+.wahosearch-box button {
+  min-height: 2.75rem;
+  padding: 0.5rem 1.25rem;
+  border: 1px solid var(--wahosearch-accent);
+  border-radius: 0.375rem;
+  background: var(--wahosearch-accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wahosearch-box button:hover,
+.wahosearch-box button:focus-visible {
+  filter: brightness(0.9);
+}
+
+.wahosearch-box input[type="search"]:focus-visible,
+.wahosearch-box button:focus-visible,
+.wahosearch-filters select:focus-visible,
+.wahosearch-filters button:focus-visible,
+.wahosearch-filters a:focus-visible,
+.wahosearch-result a:focus-visible,
+.wahosearch-search__pager a:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.wahosearch-search__heading {
+  font-size: 1.125rem;
+  margin: 0 0 1rem;
+}
+
+.wahosearch-search__page,
+.wahosearch-search__hint,
+.wahosearch-result__section,
+.wahosearch-result__meta {
+  color: var(--wahosearch-muted);
+}
+
+.wahosearch-search__message--error {
+  color: var(--wahosearch-error);
+}
+
+.wahosearch-search__results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wahosearch-search__item {
+  padding-block: 1rem;
+  border-block-end: 1px solid var(--wahosearch-border);
+}
+
+.wahosearch-result__title {
+  font-size: 1.0625rem;
+  margin: 0 0 0.25rem;
+}
+
+.wahosearch-result__title a {
+  color: var(--wahosearch-accent);
+}
+
+.wahosearch-result__badge {
+  display: inline-block;
+  margin-inline-start: 0.375rem;
+  padding: 0 0.375rem;
+  border-radius: 0.25rem;
+  background: var(--wahosearch-badge-bg);
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.wahosearch-result__section,
+.wahosearch-result__meta {
+  font-size: 0.875rem;
+  margin: 0 0 0.25rem;
+}
+
+.wahosearch-result__snippet {
+  margin: 0 0 0.25rem;
+}
+
+.wahosearch-result__type + .wahosearch-result__parent::before {
+  content: " · ";
+}
+
+.wahosearch-search__pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-block-start: 1.5rem;
+}
+
+.wahosearch-search__pager a[rel="next"] {
+  margin-inline-start: auto;
+}
+
+.wahosearch-suggestions {
+  position: absolute;
+  z-index: 10;
+  inset-inline: 0;
+  top: calc(100% + 0.25rem);
+  max-height: 20rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  border: 1px solid var(--wahosearch-border);
+  border-radius: 0.375rem;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 12%);
+}
+
+.wahosearch-suggestions__item {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+
+.wahosearch-suggestions__item[aria-selected="true"],
+.wahosearch-suggestions__item:hover {
+  background: var(--wahosearch-option-bg);
+}
+
+/* A page title: picking it opens the page. */
+.wahosearch-suggestions__item--page {
+  color: var(--wahosearch-accent);
+}
+
+.wahosearch-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: flex-end;
+  margin-block-end: 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--wahosearch-border);
+  border-radius: 0.375rem;
+}
+
+.wahosearch-filters__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 9rem;
+}
+
+.wahosearch-filters label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.wahosearch-filters select {
+  min-height: 2.5rem;
+  max-width: 16rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--wahosearch-border);
+  border-radius: 0.375rem;
+  background: #fff;
+  font: inherit;
+}
+
+.wahosearch-filters__actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.wahosearch-filters button {
+  min-height: 2.5rem;
+  padding: 0.25rem 1rem;
+  border: 1px solid var(--wahosearch-accent);
+  border-radius: 0.375rem;
+  background: #fff;
+  color: var(--wahosearch-accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wahosearch-search__notice {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-inline-start: 4px solid var(--wahosearch-notice-border);
+  background: var(--wahosearch-notice-bg);
+}
+
+.wahosearch-result__snippet mark {
+  padding: 0 1px;
+  background: var(--wahosearch-mark-bg);
+  color: inherit;
+}

@@ -1,0 +1,38 @@
+services:
+  logger.channel.wahosearch_connector:
+    parent: logger.channel_base
+    arguments: ['wahosearch_connector']
+
+  wahosearch_connector.api_client:
+    class: Drupal\wahosearch_connector\Service\ApiClient
+    arguments: ['@http_client', '@config.factory', '@state', '@datetime.time']
+
+  wahosearch_connector.content_selection:
+    class: Drupal\wahosearch_connector\Service\ContentSelection
+    arguments: ['@config.factory', '@entity_type.manager', '@entity_type.bundle.info', '@entity_field.manager', '@database', '@datetime.time', '@path.matcher', '@path_alias.manager']
+
+  wahosearch_connector.normalizer:
+    class: Drupal\wahosearch_connector\Service\ContentNormalizer
+    arguments: ['@wahosearch_connector.content_selection', '@entity_type.manager', '@entity_type.bundle.info', '@file_url_generator', '@wahosearch_connector.sync_log', '@config.factory']
+
+  wahosearch_connector.widget_embed:
+    class: Drupal\wahosearch_connector\Service\WidgetEmbed
+    arguments: ['@config.factory', '@language_manager', '@state']
+
+  wahosearch_connector.site_search:
+    class: Drupal\wahosearch_connector\Service\SiteSearch
+    arguments: ['@wahosearch_connector.api_client', '@language_manager', '@current_user', '@logger.channel.wahosearch_connector', '@cache.default', '@transliteration']
+
+  wahosearch_connector.sync_log:
+    class: Drupal\wahosearch_connector\Service\SyncLog
+    arguments: ['@database', '@datetime.time', '@logger.channel.wahosearch_connector']
+
+  wahosearch_connector.tracker:
+    class: Drupal\wahosearch_connector\Service\ItemTracker
+    arguments: ['@database', '@datetime.time']
+
+  wahosearch_connector.sync_manager:
+    class: Drupal\wahosearch_connector\Service\SyncManager
+    arguments: ['@wahosearch_connector.api_client', '@wahosearch_connector.normalizer', '@wahosearch_connector.content_selection', '@wahosearch_connector.tracker', '@wahosearch_connector.sync_log', '@entity_type.manager', '@queue', '@config.factory', '@state', '@datetime.time']
+    tags:
+      - { name: needs_destruction }

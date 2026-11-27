@@ -1,0 +1,137 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for WahoSearch Connector.
+ */
+
+declare(strict_types=1);
+
+use Drupal\wahosearch_connector\Hook\RuntimeRequirements;
+use Drupal\wahosearch_connector\Service\ApiClient;
+use Drupal\wahosearch_connector\Service\SyncManager;
+use Drupal\Core\Hook\Attribute\LegacyRequirementsHook;
+
+/**
+ * Implements hook_schema().
+ */
+function wahosearch_connector_schema(): array {
+  $schema['wahosearch_connector_item'] = [
+    'description' => 'One row per document sent to the platform.',
+    'fields' => [
+      'doc_id' => ['type' => 'varchar_ascii', 'length' => 128, 'not null' => TRUE],
+      'entity_type' => ['type' => 'varchar_ascii', 'length' => 32, 'not null' => TRUE],
+      'entity_id' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+      'langcode' => ['type' => 'varchar_ascii', 'length' => 12, 'not null' => TRUE],
+      'bundle' => ['type' => 'varchar_ascii', 'length' => 64, 'not null' => TRUE],
+      'status' => ['type' => 'varchar_ascii', 'length' => 16, 'not null' => TRUE],
+      'hash' => ['type' => 'varchar_ascii', 'length' => 64, 'not null' => FALSE],
+      'last_synced' => ['type' => 'int', 'not null' => TRUE, 'default' => 0],
+      'last_error' => ['type' => 'text', 'size' => 'normal', 'not null' => FALSE],
+    ],
+    'primary key' => ['doc_id'],
+    'indexes' => [
+      'entity' => ['entity_type', 'entity_id'],
+      'bundle_status' => ['bundle', 'status'],
+      'status_synced' => ['status', 'last_synced'],
+    ],
+  ];
+
+  $schema['wahosearch_connector_excluded'] = [
+    'description' => 'Content excluded individually from the search index.',
+    'fields' => [
+      'entity_type' => ['type' => 'varchar_ascii', 'length' => 32, 'not null' => TRUE],
+      'entity_id' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+      'uid' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+      'created' => ['type' => 'int', 'not null' => TRUE, 'default' => 0],
+    ],
+    'primary key' => ['entity_type', 'entity_id'],
+  ];
+
+  $schema['wahosearch_connector_log'] = [
+    'description' => 'Synchronization log shown to administrators.',
+    'fields' => [
+      'id' => ['type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE],
+      'created' => ['type' => 'int', 'not null' => TRUE, 'default' => 0],
+      'level' => ['type' => 'varchar_ascii', 'length' => 16, 'not null' => TRUE],
+      'operation' => ['type' => 'varchar_ascii', 'length' => 32, 'not null' => TRUE],
+      'message' => ['type' => 'text', 'size' => 'normal', 'not null' => TRUE],
+      'reference' => ['type' => 'varchar', 'length' => 255, 'not null' => FALSE],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'level' => ['level'],
+      'created' => ['created'],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function wahosearch_connector_uninstall(): void {
+  \Drupal::state()->deleteMultiple([
+    ApiClient::SECRET_STATE_KEY,
+    SyncManager::STATE_LAST_FULL_SYNC,
+    SyncManager::STATE_LAST_SUCCESS,
+    SyncManager::STATE_LAST_RECONCILE,
+    SyncManager::STATE_RECONCILE_REQUESTED,
+    SyncManager::STATE_CONNECTION,
+  ]);
+  \Drupal::queue(SyncManager::QUEUE, TRUE)->deleteQueue();
+}
+
+/**
+ * Adds the settings for PDFs, indexing rules and search display.
+ */
+function wahosearch_connector_update_10101(): void {
+  $config = \Drupal::configFactory()->getEditable('wahosearch_connector.settings');
+  $defaults = [
+    'reconcile_days' => 7,
+    'pdf_max_mb' => 25,
+    'include_paths' => '',
+    'exclude_paths' => '',
+    'priority_sections' => '',
+    'search_page' => FALSE,
+    'chatbot' => FALSE,
+  ];
+  foreach ($defaults as $key => $value) {
+    if ($config->get($key) === NULL) {
+      $config->set($key, $value);
+    }
+  }
+  $config->save();
+}
+
+/**
+ * Adds the choice between the search page in Drupal and the hosted page.
+ */
+function wahosearch_connector_update_10102(): void {
+  $config = \Drupal::configFactory()->getEditable('wahosearch_connector.settings');
+  if ($config->get('search_mode') === NULL) {
+    $config->set('search_mode', 'drupal')->save();
+  }
+}
+
+/**
+ * Adds filters, sorting and suggestions to the search page, turned on.
+ */
+function wahosearch_connector_update_10103(): void {
+  $config = \Drupal::configFactory()->getEditable('wahosearch_connector.settings');
+  foreach (['search_filters', 'search_suggestions'] as $key) {
+    if ($config->get($key) === NULL) {
+      $config->set($key, TRUE);
+    }
+  }
+  $config->save();
+}
+
+/**
+ * Implements hook_requirements().
+ */
+#[LegacyRequirementsHook]
+function wahosearch_connector_requirements(string $phase): array {
+  return $phase === 'runtime' ? RuntimeRequirements::build() : [];
+}

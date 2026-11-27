@@ -1,0 +1,33 @@
+search_page:
+  css:
+    component:
+      css/search-page.css: {}
+
+search_click:
+  js:
+    js/search-click.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+
+search_frame:
+  js:
+    js/search-frame.js: {}
+  css:
+    component:
+      css/search-page.css: {}
+  dependencies:
+    - core/drupal
+    - core/once
+
+search_suggest:
+  js:
+    js/search-suggest.js: {}
+  css:
+    component:
+      css/search-page.css: {}
+  dependencies:
+    - core/drupal
+    - core/drupal.announce
+    - core/drupal.debounce
+    - core/once

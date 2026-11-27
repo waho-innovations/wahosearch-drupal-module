@@ -1,0 +1,4 @@
+services:
+  wahosearch_connector.api_client:
+    class: Drupal\wahosearch_connector_test\FakeApiClient
+    arguments: ['@http_client', '@config.factory', '@state', '@datetime.time']

@@ -1,0 +1,643 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: wahosearch_connector 1.0.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language: fr\n"
+
+msgid "WahoSearch Connector"
+msgstr "Connecteur WahoSearch"
+
+msgid "Connection"
+msgstr "Connexion"
+
+msgid "Content types"
+msgstr "Types de contenu"
+
+msgid "Synchronization"
+msgstr "Synchronisation"
+
+msgid "Excluded content"
+msgstr "Contenu exclu"
+
+msgid "Log"
+msgstr "Journal"
+
+msgid "Indexed content types"
+msgstr "Types de contenu indexés"
+
+msgid "Synchronization log"
+msgstr "Journal de synchronisation"
+
+msgid "Connect this site to the WahoSearch platform and choose what gets indexed."
+msgstr "Connectez ce site à la plateforme WahoSearch et choisissez ce qui est indexé."
+
+msgid "Administer WahoSearch Connector"
+msgstr "Administrer le connecteur WahoSearch"
+
+msgid "Configure the SaaS connection, content types and field mapping, and run synchronization."
+msgstr "Configurer la connexion à la plateforme, les types de contenu et les champs, et lancer la synchronisation."
+
+msgid "Exclude individual content from WahoSearch"
+msgstr "Exclure des contenus individuels de WahoSearch"
+
+msgid "Show the Exclude from WahoSearch option on content edit forms."
+msgstr "Afficher l’option Exclure de WahoSearch sur les formulaires de modification de contenu."
+
+msgid "Platform connection"
+msgstr "Connexion à la plateforme"
+
+msgid "Platform URL"
+msgstr "URL de la plateforme"
+
+msgid "The address of the search platform. It must use HTTPS."
+msgstr "L’adresse de la plateforme de recherche. Elle doit utiliser HTTPS."
+
+msgid "Site ID"
+msgstr "Identifiant du site"
+
+msgid "Shown on the website page of the platform dashboard."
+msgstr "Affiché sur la page du site Web dans le tableau de bord de la plateforme."
+
+msgid "Secret key"
+msgstr "Clé secrète"
+
+msgid "The secret key is set in settings.php."
+msgstr "La clé secrète est définie dans settings.php."
+
+msgid "A secret key is saved. Leave this empty to keep it, or enter a new one to replace it."
+msgstr "Une clé secrète est enregistrée. Laissez ce champ vide pour la conserver, ou saisissez-en une nouvelle pour la remplacer."
+
+msgid "Shown once when the website is created on the platform."
+msgstr "Affichée une seule fois lors de la création du site Web sur la plateforme."
+
+msgid "Synchronization behaviour"
+msgstr "Fonctionnement de la synchronisation"
+
+msgid "Update the search index automatically when content changes"
+msgstr "Mettre à jour l’index de recherche automatiquement lorsque le contenu change"
+
+msgid "Send changes right after saving instead of waiting for cron"
+msgstr "Envoyer les modifications dès l’enregistrement sans attendre le cron"
+
+msgid "Items per request"
+msgstr "Éléments par requête"
+
+msgid "Request timeout in seconds"
+msgstr "Délai d’expiration des requêtes, en secondes"
+
+msgid "Days to keep log entries"
+msgstr "Nombre de jours de conservation du journal"
+
+msgid "Save and test connection"
+msgstr "Enregistrer et tester la connexion"
+
+msgid "The platform URL must use HTTPS. Plain HTTP is only allowed on local development hosts."
+msgstr "L’URL de la plateforme doit utiliser HTTPS. HTTP n’est permis que sur les hôtes de développement locaux."
+
+msgid "Connected to the platform as %site."
+msgstr "Connecté à la plateforme en tant que %site."
+
+msgid "The settings were saved, but the connection failed: @reason"
+msgstr "Les paramètres ont été enregistrés, mais la connexion a échoué : @reason"
+
+msgid "Only the content types ticked here are sent to the search platform. Everything else stays private to this site."
+msgstr "Seuls les types de contenu cochés ici sont envoyés à la plateforme de recherche. Tout le reste demeure privé sur ce site."
+
+msgid "Content types on this site"
+msgstr "Types de contenu de ce site"
+
+msgid "Content type"
+msgstr "Type de contenu"
+
+msgid "Index"
+msgstr "Indexer"
+
+msgid "Include restricted content"
+msgstr "Inclure le contenu restreint"
+
+msgid "Published items"
+msgstr "Éléments publiés"
+
+msgid "Indexed documents"
+msgstr "Documents indexés"
+
+msgid "Fields"
+msgstr "Champs"
+
+msgid "This site has no content types yet."
+msgstr "Ce site n’a encore aucun type de contenu."
+
+msgid "Index @type"
+msgstr "Indexer @type"
+
+msgid "Include restricted @type content"
+msgstr "Inclure le contenu restreint de @type"
+
+msgid "Choose fields for @type"
+msgstr "Choisir les champs de @type"
+
+msgid "Restricted content is content that anonymous visitors cannot open. When it is included, the roles allowed to view it are sent with it."
+msgstr "Le contenu restreint est le contenu que les visiteurs anonymes ne peuvent pas ouvrir. S’il est inclus, les rôles autorisés à le consulter sont envoyés avec lui."
+
+msgid "Save content types"
+msgstr "Enregistrer les types de contenu"
+
+msgid "The content types were saved."
+msgstr "Les types de contenu ont été enregistrés."
+
+msgid "@count items were queued to update the search index."
+msgstr "@count éléments ont été mis en file d’attente pour mettre à jour l’index de recherche."
+
+msgid "Fields of @type"
+msgstr "Champs de @type"
+
+msgid "The title, address, language and dates are always sent. Choose the other fields to include."
+msgstr "Le titre, l’adresse, la langue et les dates sont toujours envoyés. Choisissez les autres champs à inclure."
+
+msgid "Available fields"
+msgstr "Champs disponibles"
+
+msgid "Field"
+msgstr "Champ"
+
+msgid "Field type"
+msgstr "Type de champ"
+
+msgid "Include"
+msgstr "Inclure"
+
+msgid "Name in search index"
+msgstr "Nom dans l’index de recherche"
+
+msgid "Used as"
+msgstr "Utilisé comme"
+
+msgid "This content type has no fields that can be indexed."
+msgstr "Ce type de contenu n’a aucun champ pouvant être indexé."
+
+msgid "Taxonomy filter"
+msgstr "Filtre de taxonomie"
+
+msgid "Main searchable text"
+msgstr "Texte principal de recherche"
+
+msgid "Summary"
+msgstr "Résumé"
+
+msgid "Metadata"
+msgstr "Métadonnées"
+
+msgid "Include @field"
+msgstr "Inclure @field"
+
+msgid "Name in search index for @field"
+msgstr "Nom dans l’index de recherche pour @field"
+
+msgid "Use of @field"
+msgstr "Utilisation de @field"
+
+msgid "Save fields"
+msgstr "Enregistrer les champs"
+
+msgid "Index names can only use lowercase letters, numbers and underscores, and must start with a letter."
+msgstr "Les noms d’index ne peuvent contenir que des lettres minuscules, des chiffres et des traits de soulignement, et doivent commencer par une lettre."
+
+msgid "The index name %name is used twice."
+msgstr "Le nom d’index %name est utilisé deux fois."
+
+msgid "The field selection was saved."
+msgstr "La sélection de champs a été enregistrée."
+
+msgid "The connection is not set up yet. Please complete the <a href=\":url\">connection settings</a> first."
+msgstr "La connexion n’est pas encore configurée. Veuillez d’abord remplir les <a href=\":url\">paramètres de connexion</a>."
+
+msgid "Current status"
+msgstr "État actuel"
+
+msgid "Item"
+msgstr "Élément"
+
+msgid "Value"
+msgstr "Valeur"
+
+msgid "Documents with errors"
+msgstr "Documents en erreur"
+
+msgid "Changes waiting to be sent"
+msgstr "Modifications en attente d’envoi"
+
+msgid "Last full synchronization"
+msgstr "Dernière synchronisation complète"
+
+msgid "Never"
+msgstr "Jamais"
+
+msgid "Last error"
+msgstr "Dernière erreur"
+
+msgid "None"
+msgstr "Aucune"
+
+msgid "Send pending changes now"
+msgstr "Envoyer maintenant les modifications en attente"
+
+msgid "Retry failed items"
+msgstr "Réessayer les éléments en échec"
+
+msgid "Run full synchronization"
+msgstr "Lancer la synchronisation complète"
+
+msgid "Update a single item"
+msgstr "Mettre à jour un seul élément"
+
+msgid "Node ID"
+msgstr "Identifiant du nœud"
+
+msgid "Send this item"
+msgstr "Envoyer cet élément"
+
+msgid "No content was found with that ID."
+msgstr "Aucun contenu ne correspond à cet identifiant."
+
+msgid "Title"
+msgstr "Titre"
+
+msgid "Excluded on"
+msgstr "Exclu le"
+
+msgid "No individual content is excluded. To exclude an item, use the WahoSearch option on its edit form."
+msgstr "Aucun contenu individuel n’est exclu. Pour exclure un élément, utilisez l’option WahoSearch de son formulaire de modification."
+
+msgid "Include selected items again"
+msgstr "Inclure de nouveau les éléments sélectionnés"
+
+msgid "Please select at least one item."
+msgstr "Veuillez sélectionner au moins un élément."
+
+msgid "All"
+msgstr "Tout"
+
+msgid "Errors"
+msgstr "Erreurs"
+
+msgid "Warnings"
+msgstr "Avertissements"
+
+msgid "Show"
+msgstr "Afficher"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Level"
+msgstr "Niveau"
+
+msgid "Operation"
+msgstr "Opération"
+
+msgid "Message"
+msgstr "Message"
+
+msgid "No log entries yet."
+msgstr "Aucune entrée dans le journal pour le moment."
+
+msgid "WahoSearch"
+msgstr "WahoSearch"
+
+msgid "Exclude from WahoSearch"
+msgstr "Exclure de WahoSearch"
+
+msgid "This item will not appear in website search or chatbot answers."
+msgstr "Cet élément n’apparaîtra ni dans la recherche du site ni dans les réponses du robot conversationnel."
+
+msgid "Full synchronization"
+msgstr "Synchronisation complète"
+
+msgid "Completed @current of @total steps."
+msgstr "@current étapes terminées sur @total."
+
+msgid "The full synchronization stopped because of an error."
+msgstr "La synchronisation complète s’est arrêtée à cause d’une erreur."
+
+msgid "Sending pending changes"
+msgstr "Envoi des modifications en attente"
+
+msgid "Content type @bundle: @done of @total"
+msgstr "Type de contenu @bundle : @done sur @total"
+
+msgid "The full synchronization stopped: @reason. Nothing was removed from the index. Please try again."
+msgstr "La synchronisation complète s’est arrêtée : @reason. Rien n’a été retiré de l’index. Veuillez réessayer."
+
+msgid "@count documents could not be sent, so old content was not cleaned up. Please check the log and run the full synchronization again."
+msgstr "@count documents n’ont pas pu être envoyés; l’ancien contenu n’a donc pas été nettoyé. Veuillez consulter le journal et relancer la synchronisation complète."
+
+msgid "Full synchronization finished. @count items processed."
+msgstr "Synchronisation complète terminée. @count éléments traités."
+
+msgid "All content was sent, but the run could not be closed: @reason"
+msgstr "Tout le contenu a été envoyé, mais l’opération n’a pas pu être fermée : @reason"
+
+msgid "@count changes left."
+msgstr "Il reste @count modifications."
+
+msgid "@count changes processed."
+msgstr "@count modifications traitées."
+
+msgid "@count changes are still waiting. Please check the log."
+msgstr "@count modifications sont encore en attente. Veuillez consulter le journal."
+
+msgid "Configured"
+msgstr "Configuré"
+
+msgid "Not configured"
+msgstr "Non configuré"
+
+msgid "Enter the platform details on the <a href=\":url\">connection page</a>."
+msgstr "Entrez les renseignements de la plateforme sur la <a href=\":url\">page de connexion</a>."
+
+msgid "@label <small>(@name)</small>"
+msgstr "@label <small>(@name)</small>"
+
+msgid "Connects this site to the hosted WahoSearch platform. Choose the content types and fields to index, then run a full synchronization. After that, changes are sent automatically."
+msgstr "Connecte ce site à la plateforme WahoSearch hébergée. Choisissez les types de contenu et les champs à indexer, puis lancez une synchronisation complète. Ensuite, les modifications sont envoyées automatiquement."
+
+msgid "Indexing rules"
+msgstr "Règles d'indexation"
+
+msgid "Search display"
+msgstr "Affichage de la recherche"
+
+msgid "WahoSearch box"
+msgstr "Boîte de recherche WahoSearch"
+
+msgid "Include files"
+msgstr "Inclure les fichiers"
+
+msgid "Include PDF, Word, Excel and PowerPoint files of @type"
+msgstr "Inclure les fichiers PDF, Word, Excel et PowerPoint de @type"
+
+msgid "I understand that unticking a content type removes its content from search"
+msgstr "Je comprends que décocher un type de contenu retire son contenu de la recherche"
+
+msgid "This removes indexed documents from search: @list. Tick the confirmation to continue."
+msgstr "Cette action retire des documents indexés de la recherche : @list. Cochez la confirmation pour continuer."
+
+msgid "Connection status"
+msgstr "État de la connexion"
+
+msgid "Not tested yet."
+msgstr "Pas encore testée."
+
+msgid "Connected, checked @date."
+msgstr "Connecté, vérifié le @date."
+
+msgid "Not connected, checked @date: @reason"
+msgstr "Non connecté, vérifié le @date : @reason"
+
+msgid "Last successful synchronization"
+msgstr "Dernière synchronisation réussie"
+
+msgid "Days between automatic reconciliation runs"
+msgstr "Jours entre les rapprochements automatiques"
+
+msgid "Compares all content with the platform and fixes differences. Enter 0 to turn this off."
+msgstr "Compare tout le contenu avec la plateforme et corrige les écarts. Saisissez 0 pour désactiver."
+
+msgid "Largest PDF to send, in megabytes"
+msgstr "Taille maximale des PDF à envoyer, en mégaoctets"
+
+msgid "Documents held back by the platform"
+msgstr "Documents retenus par la plateforme"
+
+msgid "Last reconciliation"
+msgstr "Dernier rapprochement"
+
+msgid "One path per line. Use * as a wildcard, for example /news/*. These rules apply on top of the content types you selected."
+msgstr "Un chemin par ligne. Utilisez * comme caractère générique, par exemple /news/*. Ces règles s'ajoutent aux types de contenu sélectionnés."
+
+msgid "Only index these paths"
+msgstr "Indexer seulement ces chemins"
+
+msgid "Leave empty to allow every path."
+msgstr "Laissez vide pour autoriser tous les chemins."
+
+msgid "Never index these paths"
+msgstr "Ne jamais indexer ces chemins"
+
+msgid "These always win over the list above."
+msgstr "Ces chemins ont toujours priorité sur la liste ci-dessus."
+
+msgid "Priority sections"
+msgstr "Sections prioritaires"
+
+msgid "Most important first. Each line must be a whole section ending in /*, for example /admissions/*. Single pages cannot be prioritized, so results stay relevance first."
+msgstr "La plus importante d'abord. Chaque ligne doit être une section entière se terminant par /*, par exemple /admissions/*. Les pages individuelles ne peuvent pas être priorisées, afin que la pertinence reste le premier critère."
+
+msgid "Effect of these rules on published content"
+msgstr "Effet de ces règles sur le contenu publié"
+
+msgid "Change"
+msgstr "Changement"
+
+msgid "Items"
+msgstr "Éléments"
+
+msgid "Examples"
+msgstr "Exemples"
+
+msgid "Will be added"
+msgstr "Seront ajoutés"
+
+msgid "Will be removed"
+msgstr "Seront retirés"
+
+msgid "I understand that these rules can remove content from search"
+msgstr "Je comprends que ces règles peuvent retirer du contenu de la recherche"
+
+msgid "Preview changes"
+msgstr "Aperçu des changements"
+
+msgid "Save rules"
+msgstr "Enregistrer les règles"
+
+msgid "Paths must start with /: @lines"
+msgstr "Les chemins doivent commencer par / : @lines"
+
+msgid "Priority sections must start with / and end with /*: @lines"
+msgstr "Les sections prioritaires doivent commencer par / et se terminer par /* : @lines"
+
+msgid "These rules remove about @count items from search. Tick the confirmation to continue."
+msgstr "Ces règles retirent environ @count éléments de la recherche. Cochez la confirmation pour continuer."
+
+msgid "The rules were saved. The search index will be updated in the background."
+msgstr "Les règles ont été enregistrées. L'index de recherche sera mis à jour en arrière-plan."
+
+msgid "Search runs inside your Drupal pages, so your theme, menus and language switcher stay in charge. Place the WahoSearch box block wherever visitors should see it."
+msgstr "La recherche s'exécute dans vos pages Drupal : votre thème, vos menus et votre sélecteur de langue restent aux commandes. Placez le bloc Boîte de recherche WahoSearch là où les visiteurs doivent le voir."
+
+msgid "Provide a search page"
+msgstr "Fournir une page de recherche"
+
+msgid "Results are shown in the language of the page: the English page shows English content only, the French page French content only."
+msgstr "Les résultats sont affichés dans la langue de la page : la page anglaise montre seulement le contenu anglais, la page française seulement le contenu français."
+
+msgid "Page address"
+msgstr "Adresse de la page"
+
+msgid "Leave empty to use @path. The language prefix, such as /fr, is added by Drupal."
+msgstr "Laissez vide pour utiliser @path. Le préfixe de langue, comme /fr, est ajouté par Drupal."
+
+msgid "Address in @language"
+msgstr "Adresse en @language"
+
+msgid "The address must start with / and contain only letters, numbers, - and /, for example /search."
+msgstr "L'adresse doit commencer par / et ne contenir que des lettres, des chiffres, - et /, par exemple /recherche."
+
+msgid "%address is already used by another page."
+msgstr "%address est déjà utilisée par une autre page."
+
+msgid "Show the chatbot on public pages"
+msgstr "Afficher le robot conversationnel sur les pages publiques"
+
+msgid "Search this site"
+msgstr "Rechercher sur ce site"
+
+msgid "Search"
+msgstr "Rechercher"
+
+msgid "Search is available in English and French only."
+msgstr "La recherche est offerte en français et en anglais seulement."
+
+msgid "Search is not available right now. Please try again later."
+msgstr "La recherche n’est pas disponible pour le moment. Veuillez réessayer plus tard."
+
+msgid "Search is busy right now. Please try again in a moment."
+msgstr "La recherche est très sollicitée en ce moment. Veuillez réessayer dans un instant."
+
+msgid "No results for “@query”."
+msgstr "Aucun résultat pour « @query »."
+
+msgid "Try fewer words, other words, or check the spelling."
+msgstr "Essayez avec moins de mots ou d’autres mots, ou vérifiez l’orthographe."
+
+msgid "Results for “@query”"
+msgstr "Résultats pour « @query »"
+
+msgid "(page @page)"
+msgstr "(page @page)"
+
+msgid "More results"
+msgstr "Plus de résultats"
+
+msgid "Previous"
+msgstr "Précédent"
+
+msgid "Attached to"
+msgstr "Joint à"
+
+msgid "Search results"
+msgstr "Résultats de recherche"
+
+msgid "How results are shown"
+msgstr "Affichage des résultats"
+
+msgid "Inside your Drupal pages (Starter, Pro and Enterprise plans)"
+msgstr "Dans vos pages Drupal (forfaits Starter, Pro et Enterprise)"
+
+msgid "Page hosted by WahoSearch, shown in a frame (all plans, including Free)"
+msgstr "Page hébergée par WahoSearch, affichée dans un cadre (tous les forfaits, y compris Free)"
+
+msgid "Results use your theme and the module templates, and logged-in visitors also find restricted content they may view."
+msgstr "Les résultats utilisent votre thème et les gabarits du module, et les visiteurs connectés trouvent aussi le contenu restreint qu'ils peuvent voir."
+
+msgid "Public content only. The platform address must be reachable by visitors, and the website address on the platform must match this site."
+msgstr "Contenu public seulement. L'adresse de la plateforme doit être accessible aux visiteurs, et l'adresse du site sur la plateforme doit correspondre à ce site."
+
+msgid "Your plan uses the page hosted by WahoSearch. Search inside your Drupal pages and custom page addresses come with the Starter, Pro and Enterprise plans."
+msgstr "Votre forfait utilise la page hébergée par WahoSearch. La recherche dans vos pages Drupal et les adresses de page personnalisées sont offertes avec les forfaits Starter, Pro et Enterprise."
+
+msgid "Only without PDF"
+msgstr "Seulement sans PDF"
+
+msgid "Send @field only when no PDF of the item is indexed"
+msgstr "Envoyer @field seulement quand aucun PDF de l'élément n'est indexé"
+
+msgid "Tick \"Only without PDF\" for a field that holds a copy of the text of the attached file: it is then sent only for items whose PDF is not indexed, such as Word or Excel files, so the same text is not indexed twice."
+msgstr "Cochez « Seulement sans PDF » pour un champ qui contient une copie du texte du fichier joint : il est alors envoyé seulement pour les éléments dont le PDF n'est pas indexé, comme les fichiers Word ou Excel, pour que le même texte ne soit pas indexé deux fois."
+
+msgid "Let visitors filter and sort the results"
+msgstr "Permettre aux visiteurs de filtrer et de trier les résultats"
+
+msgid "By type (pages or files), content type and topic, with the values found in your own content, and by best match, newest or title. Visitors can also choose to search the exact words."
+msgstr "Par type (pages ou fichiers), type de contenu et sujet, avec les valeurs trouvées dans votre propre contenu, et par pertinence, date ou titre. Les visiteurs peuvent aussi choisir de chercher les mots exacts."
+
+msgid "Suggest searches while visitors type"
+msgstr "Suggérer des recherches pendant la saisie"
+
+msgid "Earlier searches on this site that found something, and titles of pages the visitor may see."
+msgstr "Des recherches déjà faites sur ce site qui ont donné des résultats, et des titres de pages que le visiteur peut voir."
+
+msgid "Smart search is used up for this month. These results come from a simple word search."
+msgstr "La recherche intelligente est épuisée pour ce mois-ci. Ces résultats viennent d’une recherche simple par mots."
+
+msgid "Smart search is not available right now. These results come from a simple word search."
+msgstr "La recherche intelligente n’est pas disponible pour le moment. Ces résultats viennent d’une recherche simple par mots."
+
+msgid "Pages"
+msgstr "Pages"
+
+msgid "Files"
+msgstr "Fichiers"
+
+msgid "@label (@count)"
+msgstr "@label (@count)"
+
+msgid "Refine results"
+msgstr "Affiner les résultats"
+
+msgid "Search type"
+msgstr "Type de recherche"
+
+msgid "Smart search"
+msgstr "Recherche intelligente"
+
+msgid "Exact words"
+msgstr "Mots exacts"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Topic"
+msgstr "Sujet"
+
+msgid "Sort by"
+msgstr "Trier par"
+
+msgid "Best match"
+msgstr "Pertinence"
+
+msgid "Newest first"
+msgstr "Plus récents d’abord"
+
+msgid "Title (A to Z)"
+msgstr "Titre (A à Z)"
+
+msgid "Apply"
+msgstr "Appliquer"
+
+msgid "Clear filters"
+msgstr "Effacer les filtres"
+
+msgid "Suggestions"
+msgstr "Suggestions"
+
+msgid "(opens the page)"
+msgstr "(ouvre la page)"
+
+msgid "1 suggestion available."
+msgid_plural "@count suggestions available."
+msgstr[0] "1 suggestion disponible."
+msgstr[1] "@count suggestions disponibles."
