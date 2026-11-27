@@ -9,16 +9,8 @@ French admin screens. See [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
 ## Install
 
-The Composer package is hosted in a private GitHub repository. Team and
-customer installations both require read access to that repository. Use a
-fine-grained GitHub token scoped to this repository with read-only Contents
-permission. Store it as `github-oauth.github.com` in Composer's private auth
-configuration, or supply it through `COMPOSER_AUTH` from your CI secret store.
-Keep it out of `composer.json` and Git. See [Composer's GitHub authentication
-guide](https://getcomposer.org/doc/articles/authentication-for-private-packages.md#github-oauth).
-
-Once `v1.4.0` or a later `1.x` release is tagged on GitHub, run these commands
-from the Drupal project's root:
+Once the GitHub repository is public, install the tagged release directly from
+GitHub. Run these commands from the Drupal project's root:
 
     composer config repositories.wahosearch-connector vcs https://github.com/waho-innovations/wahosearch-drupal-module.git
     composer require --prefer-dist 'waho-innovations/wahosearch-connector:^1.4'
